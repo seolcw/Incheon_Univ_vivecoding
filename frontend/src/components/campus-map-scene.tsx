@@ -743,7 +743,8 @@ export function CampusMapScene({
       </div>
 
       {live
-        .filter(({ building }) => building.id !== selectedId)
+        // 건물을 고르면 선택 팝업만 남긴다. 다른 건물을 눌렀을 때 이름표가 함께 떠 있지 않게 한다.
+        .filter(() => selectedId === null)
         .map(({ building, fill, text }) => (
           <button
             key={building.id}

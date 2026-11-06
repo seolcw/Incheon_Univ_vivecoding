@@ -50,6 +50,8 @@ async function send<T>(method: "GET" | "POST", relativeUrl: string, body?: unkno
   try {
     response = await fetch(`${API_URL}${relativeUrl}`, {
       method,
+      // 폴링이 브라우저 캐시를 읽으면 다른 기기의 변경이 새로고침 전까지 안 보인다.
+      cache: "no-store",
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
