@@ -109,6 +109,10 @@
 - 확인 방법: 관련 백엔드27개(챗봇11개 포함), frontend build·lint 통과. 잡담에 잘못된 building=other/clarification=true가 있어도 생성 답변을 반환하고 DB 미조회, 최근3턴 전달·사용자 분리, 검색에 AI가 만든999호 문장을 쓰지 않음을 검증. 이전에 확인한 test_core의 통합 fixture/import·스텁 기대값 문제는 별개로 유지.
 - 남은 문제: 공개 실제 AI 배포 검증 진행 중. 문맥은 재시작/만료/날짜 변경 시 초기화되고 같은 userId의 탭끼리는 공유한다.
 
+## 14:04 일반 대화 실제 OpenAI·공개 배포 검증 완료
+- e615bc8 프론트/API 배포, 이어 한국어 혼용 방지 프롬프트4babfc9 API 배포 성공. 실제 ‘시간표’에는 개인/강의실 시간표를 묻고, ‘야다’에는 가볍게 받아주는 생성 응답 확인. ‘자료구조2시간 공부했더니 피곤해’에 강의실 카드 없이 대화 응답, 과목을 다시 물으면 자료구조를 기억함. 이후3층120분 검색은304/317/302호로 정상 전환.
+- 최종4babfc9에서도 자료구조 공부 응원→과목 재질문의 한국어 답변과 ‘AI 대화’ 표시 확인. 위 기록은 실제 OpenAI 응답이며 모의 테스트와 구분. 화면 증거는 저장소 밖 torch-casual-chat.jpg. 최근3턴·10분 유효 문맥과200자 답변 제한 유지, 사용자에게 무제한 기억을 보장하지 않음. GitHub be-a push 완료, 공개 웹 주소 유지.
+
 ## 13:27 main 통합 배포 및 공개 모임 초기화
 - 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
