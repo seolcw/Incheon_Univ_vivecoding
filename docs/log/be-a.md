@@ -137,3 +137,10 @@
 - 확인 방법: 문서 내부 링크와 git diff 검사, 원격 main 갱신 결과 확인. 이미 배포한6efc2b6과 실행 코드 차이 없음.
 - 남은 문제: 기존 test_core 통합 검사1개 문제를 숨기지 않고 README에 기록.14:50 초기화는 예약 상태이며 아직 실행 전.
 - 최종 통합: 작업 중 올라온 origin/main298158b의 모임5초 갱신·지도 이름표 수정까지 보존해 병합. README에 최신 소스와 현재 공개 배포6efc2b6의 차이를 명시. frontend 직접 편집 없음.
+
+## 14:48 최종 수정 공개 배포와 초기화 예약 변경
+- 바뀐 것: main298158b를 이미 포함한58ea37f에서 origin/main 병합 최신 상태 확인. Render bingang-web/API 모두58ea37f Deploy succeeded/Live, 웹1분33초·API1분10초. frontend 직접 수정 없음.
+- API 영향: 모임5초 폴링과 지도 이름표 개선 공개 반영. health200, CAMPUS_SOURCE=seed 확인.
+- 초기화 변경: 사용자 요청으로 기존14:50 seed_demo 예약을 취소·교체. 오늘14:55 한 번, 또는 사용자가 먼저 초기화를 지시하면 즉시 meetups 전체 삭제(demo-m1 포함) 후 API 재시작.15:00 이후 시작 금지. classrooms/시드는 절대 변경하지 않음. 자동화id14-50은 유지하되 이름·시각·내용 모두 변경됨.
+- 사전 확인: 인증 project_id와 실제 Firestore client.project가 대회용 empty-room-finder로 일치. 읽기 전용으로 모임2개 확인, 아직 삭제하지 않음. main.py는STORAGE=memory에서만 demo-m1을 넣으며 firestore 재시작에서는 자동 생성하지 않음.
+- 남은 작업: 초기화 트리거 후 삭제0개·API 재시작·공개목록빈배열·건물13/26 meetupCount0·health200 검증 및 보고. 현재 삭제 완료로 보고하지 않음.
