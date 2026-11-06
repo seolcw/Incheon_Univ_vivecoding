@@ -3,28 +3,44 @@
 import { formatKstTime } from "@/lib/time";
 import type { BuildingSummary, RoomStatus, RoomStatusValue } from "@/lib/types";
 
-export const ROOM_STATUS_META: Record<RoomStatusValue, { label: string; badgeClass: string; fillClass: string }> = {
+export const ROOM_STATUS_META: Record<
+  RoomStatusValue,
+  { label: string; badgeClass: string; fillClass: string; dotClass: string; textClass: string }
+> = {
   empty: {
     label: "비어있음",
     badgeClass: "bg-status-empty text-status-foreground",
     fillClass: "fill-status-empty",
+    dotClass: "bg-status-empty",
+    textClass: "text-status-empty",
   },
   meetup: {
     label: "모임 중",
     badgeClass: "bg-status-meetup text-status-foreground",
     fillClass: "fill-status-meetup",
+    dotClass: "bg-status-meetup",
+    textClass: "text-status-meetup",
   },
   class: {
     label: "수업 중",
     badgeClass: "bg-status-class text-status-foreground",
     fillClass: "fill-status-class",
+    dotClass: "bg-status-class",
+    textClass: "text-status-class",
   },
   closed: {
     label: "운영 종료",
     badgeClass: "bg-status-closed text-status-foreground",
     fillClass: "fill-status-closed",
+    dotClass: "bg-status-closed",
+    textClass: "text-status-closed",
   },
 };
+
+/** 도면 칸의 시간 막대. 4시간이면 가득 찬다. */
+export function freeFuel(room: RoomStatus): number {
+  return Math.min(room.freeMinutes / 240, 1);
+}
 
 const CLOSE_CLOCK = "22:00";
 const GENERIC_CLASS_TITLE = "수업";
