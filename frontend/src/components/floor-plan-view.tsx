@@ -142,6 +142,9 @@ function PlanLayer({
       inert={phase === "leave"}
       onAnimationEnd={(event) => event.target === event.currentTarget && onLeft?.()}
     >
+      <span aria-hidden="true" className="plan-ghost">
+        {plan.floor}
+      </span>
       {plan.cells.map((cell) => {
         const key = cell.roomName ?? `${cell.kind}-${cell.x}-${cell.y}`;
         if (cell.kind !== "room") return <StructureCell key={key} cell={cell} />;

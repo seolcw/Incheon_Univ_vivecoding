@@ -133,7 +133,7 @@ function CreatedFlood({
   }, [onClose]);
 
   return (
-    <div role="status" data-tone="hero" className="absolute inset-0 z-20 overflow-hidden text-status-foreground">
+    <div role="status" data-tone="hero" className="absolute inset-0 z-20 overflow-clip text-status-foreground">
       <span
         aria-hidden="true"
         className="flood-disc"

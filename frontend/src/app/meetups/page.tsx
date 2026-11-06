@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import { MeetupCard } from "@/components/meetup-card";
 import { MeetupFormDialog } from "@/components/meetup-form-dialog";
@@ -41,7 +43,7 @@ export default function MeetupsPage() {
       <section
         data-status="meetup"
         data-tone="hero"
-        className="hero-surface relative isolate flex flex-col gap-6 overflow-hidden rounded-[28px] p-5 sm:p-8 md:rounded-[36px] lg:p-10"
+        className="hero-surface relative isolate flex flex-col gap-6 overflow-clip rounded-[28px] p-5 sm:p-8 md:rounded-[36px] lg:p-10"
       >
         <span aria-hidden="true" className="hero-light" />
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
@@ -103,6 +105,23 @@ export default function MeetupsPage() {
             {meetups.map((meetup, index) => (
               <MeetupCard key={meetup.id} meetup={meetup} at={at} index={index + 2} />
             ))}
+            {meetups.length % 2 === 1 && (
+              <Link
+                href="/"
+                prefetch={false}
+                className="press rise group hidden min-h-48 flex-col justify-between gap-6 self-stretch rounded-[24px] border-[1.5px] border-dashed border-foreground/20 p-5 outline-none transition-colors duration-200 hover:border-foreground/45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:flex"
+                style={{ "--i": meetups.length + 2 } as CSSProperties}
+              >
+                <SeatRow members={[]} maxMembers={3} waiting={false} />
+                <span className="flex items-center justify-between gap-3 text-lg font-semibold tracking-[-0.02em]">
+                  지도에서 빈 강의실 고르기
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="size-5 shrink-0 transition-transform duration-300 ease-settle group-hover:translate-x-1"
+                  />
+                </span>
+              </Link>
+            )}
           </div>
         </section>
       )}

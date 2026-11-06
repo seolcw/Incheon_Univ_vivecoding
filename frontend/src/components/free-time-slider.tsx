@@ -13,11 +13,14 @@ const LAST = OPTIONS.length - 1;
 /** 드래그 중 가까운 눈금 쪽으로 끌리는 정도 */
 const MAGNET = 0.55;
 const THUMB_RADIUS = 15;
+/** 터치는 이만큼 가로로 움직여야 조작으로 본다. 세로 스크롤 중 스쳐도 값이 바뀌지 않는다. */
+const TOUCH_SLOP_PX = 6;
 
 /** 눈금에 걸리듯 움직이는 최소 여유 시간 조절. 도면이 드래그를 따라 바로 반응한다. */
 export function FreeTimeSlider({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const rail = useRef<HTMLDivElement>(null);
   const [dragPosition, setDragPosition] = useState<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
   const index = Math.max(
     OPTIONS.findIndex((option) => option.value === value),
     0,
@@ -40,11 +43,29 @@ export function FreeTimeSlider({ value, onChange }: { value: number; onChange: (
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
-    moveTo(event.clientX);
+    if (event.pointerType === "touch") touchStartX.current = event.clientX;
+    else moveTo(event.clientX);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (dragPosition !== null) moveTo(event.clientX);
+    if (dragPosition !== null) {
+      moveTo(event.clientX);
+    } else if (touchStartX.current !== null && Math.abs(event.clientX - touchStartX.current) > TOUCH_SLOP_PX) {
+      touchStartX.current = null;
+      moveTo(event.clientX);
+    }
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    // 움직이지 않고 뗀 터치는 그 자리를 누른 것으로 처리한다.
+    if (touchStartX.current !== null) moveTo(event.clientX);
+    touchStartX.current = null;
+    setDragPosition(null);
+  }
+
+  function handlePointerCancel() {
+    touchStartX.current = null;
+    setDragPosition(null);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLSpanElement>) {
@@ -73,8 +94,8 @@ export function FreeTimeSlider({ value, onChange }: { value: number; onChange: (
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={() => setDragPosition(null)}
-        onPointerCancel={() => setDragPosition(null)}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         className="cursor-grab active:cursor-grabbing"
       >
         <div className="relative h-11">

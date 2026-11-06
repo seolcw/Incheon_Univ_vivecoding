@@ -556,6 +556,19 @@
 .plan-layer[data-phase="leave"][data-dir="down"] {
   animation: floor-leave-down 0.26s ease-in forwards;
 }
+/* 가운데 빈 마당에 지금 층을 크게 깐다 */
+.plan-ghost {
+  position: absolute;
+  top: 37%;
+  left: 50%;
+  color: var(--stage-corridor);
+  font-size: 38cqw;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  user-select: none;
+}
 .plan-cell {
   position: absolute;
   padding: 0.17cqw;
@@ -781,7 +794,7 @@
 .room-card {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: clip;
   transition:
     color 0.24s ease-out,
     transform 0.32s var(--ease-settle);

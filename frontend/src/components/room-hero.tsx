@@ -65,7 +65,7 @@ export function RoomHero({
       aria-label={`${head.buildingName} ${head.name} 현재 상태`}
       data-status={head.status}
       data-tone="hero"
-      className="hero-surface relative isolate overflow-hidden rounded-[28px] md:rounded-[36px]"
+      className="hero-surface relative isolate overflow-clip rounded-[28px] md:rounded-[36px]"
     >
       <span aria-hidden="true" className="hero-light" />
       <div className="flex flex-col gap-5 p-5 sm:gap-6 sm:p-8 lg:p-10">
