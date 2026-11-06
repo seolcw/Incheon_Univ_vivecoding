@@ -104,3 +104,19 @@ class FirestoreRepoTests(unittest.TestCase):
                 self.repo.update("missing", join)
         self.repo.delete("cancelled")
         self.assertEqual(len(self.repo.list_all()), 1)
+
+    def test_avatar_roundtrip_and_legacy_data(self):
+        original = demo_meetup()
+        original["members"][0]["avatar"] = "99-99-99-99-99-99"
+        self.repo.save(original)
+        self.assertEqual(self.repo.get(original["id"])["members"][0]["avatar"], original["members"][0]["avatar"])
+        def join(row):
+            row["members"].append({"userId": "new", "nickname": "참가", "joinedAt": row["createdAt"], "avatar": None})
+            return row
+        with patch("google.cloud.firestore.transactional", fake_transactional):
+            self.repo.update(original["id"], join)
+        restarted = FirestoreMeetupRepo(self.client)
+        self.assertIsNone(restarted.get(original["id"])["members"][1]["avatar"])
+        original["members"][0].pop("avatar")
+        self.repo.save(original)
+        self.assertEqual(restarted.get(original["id"]), original)

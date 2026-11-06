@@ -109,6 +109,16 @@
 - 확인 방법: 관련 백엔드27개(챗봇11개 포함), frontend build·lint 통과. 잡담에 잘못된 building=other/clarification=true가 있어도 생성 답변을 반환하고 DB 미조회, 최근3턴 전달·사용자 분리, 검색에 AI가 만든999호 문장을 쓰지 않음을 검증. 이전에 확인한 test_core의 통합 fixture/import·스텁 기대값 문제는 별개로 유지.
 - 남은 문제: 공개 실제 AI 배포 검증 진행 중. 문맥은 재시작/만료/날짜 변경 시 초기화되고 같은 userId의 탭끼리는 공유한다.
 
+## 14:04 일반 대화 실제 OpenAI·공개 배포 검증 완료
+- e615bc8 프론트/API 배포, 이어 한국어 혼용 방지 프롬프트4babfc9 API 배포 성공. 실제 ‘시간표’에는 개인/강의실 시간표를 묻고, ‘야다’에는 가볍게 받아주는 생성 응답 확인. ‘자료구조2시간 공부했더니 피곤해’에 강의실 카드 없이 대화 응답, 과목을 다시 물으면 자료구조를 기억함. 이후3층120분 검색은304/317/302호로 정상 전환.
+- 최종4babfc9에서도 자료구조 공부 응원→과목 재질문의 한국어 답변과 ‘AI 대화’ 표시 확인. 위 기록은 실제 OpenAI 응답이며 모의 테스트와 구분. 화면 증거는 저장소 밖 torch-casual-chat.jpg. 최근3턴·10분 유효 문맥과200자 답변 제한 유지, 사용자에게 무제한 기억을 보장하지 않음. GitHub be-a push 완료, 공개 웹 주소 유지.
+
+## 14:18 main 즉시 배포·아바타·위치 추천 인계
+- 바뀐 것: 요청한 origin/main e9c35d9를18d1d60으로 병합·push, Render 웹/API 모두18d1d60 Deploy succeeded/Live 확인. 데스크톱·390×844 모바일 뷰포트에서 새 홈 디자인과 정보대 도면 이동 확인, 실제 폰 조작 검증은 아님. frontend 직접 수정 없음.
+- 기능: 생성/join avatar 선택 문자열·null, 전체 정규식/17자/400 검증, members에 보관·응답, 기존 누락은null. 공식 캠퍼스맵 artclSeq15 좌표37.374672662043295/126.63374918297687 확인 후 location.py 별도 기준점. 거리/80올림·2km 초과null/안내, 현재층 명시 시 가까운층 우선. 시드 자리표시 좌표 미사용, 좌표 GPT/로그/DB 미전송. 새 패키지 없음.
+- 검증: 관련31개 통과, 최종80m/2km 정확 경계 보정 후 관련2개 재통과. 아바타 memory API와 가짜 Firestore 어댑터 왕복/옛 데이터 포함. 실제 공개 Firestore의 새 avatar 쓰기와 GPS 실기기 검증은 아직 아님. 첫 디자인 배포 증거 main-design-desktop.jpg/main-design-mobile.jpg는 저장소 밖 보관.
+- 인계: docs/be-a-final-handoff.md에 요청/응답 확장·공식 출처·주의점 정리. 아바타/거리/층 기능은14:25 전 be-a push 대상이며14:30 통합 후 재배포 요청을 기다림. contracts/api.md는 보호 규칙에 따라 직접 수정하지 않음.
+
 ## 13:27 main 통합 배포 및 공개 모임 초기화
 - 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.

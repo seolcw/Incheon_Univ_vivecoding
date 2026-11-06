@@ -30,6 +30,7 @@ def chat(body: ChatRequest, request: Request) -> dict:
     date = at.date().isoformat()
     resolved = resolve_intent(body.message, contexts.get(body.user_id, date), history=contexts.history(body.user_id, date))
     meetups = list_open_meetups() if resolved[0].intent == "search" else []
-    result = recommend(body.message, at, meetups, has_location=body.location is not None, resolved=resolved)
+    result = recommend(body.message, at, meetups, has_location=body.location is not None, resolved=resolved,
+                       location=body.location.model_dump() if body.location else None)
     contexts.save(body.user_id, date, resolved[0], body.message, result["reply"])
     return result

@@ -4,7 +4,7 @@ from copy import deepcopy
 from datetime import datetime
 import os
 from threading import RLock
-from typing import Callable, Literal, Protocol, TypedDict
+from typing import Callable, Literal, Protocol, TypedDict, NotRequired
 
 from errors import ApiError
 from meetup_time import KST
@@ -14,6 +14,7 @@ class Member(TypedDict):
     userId: str
     nickname: str
     joinedAt: str
+    avatar: NotRequired[str | None]
 
 
 class MeetupRecord(TypedDict):

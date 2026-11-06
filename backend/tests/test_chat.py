@@ -8,6 +8,8 @@ from core.availability import parse_at
 from core.llm import SearchIntent, interpret
 from core.recommend import recommend, explicit_minutes
 from core.chat_context import ChatContexts
+from core.location import INFO_LAT, INFO_LNG, walking_minutes
+from math import degrees
 from core import seed_loader
 from main import create_app
 
@@ -152,3 +154,38 @@ class ChatTests(unittest.TestCase):
         failed = recommend("안녕", parse_at(AT), [])
         self.assertEqual(failed["source"], "fallback")
         self.assertIn("AI 연결", failed["reply"])
+
+    def test_location_distance_cutoff_and_no_coordinates_to_ai(self):
+        origin = {"lat": INFO_LAT, "lng": INFO_LNG}
+        def north(meters):
+            return {"lat": INFO_LAT + degrees(meters / 6371000), "lng": INFO_LNG}
+        self.assertEqual(walking_minutes(None), (None, False))
+        self.assertEqual(walking_minutes(origin), (0, False))
+        self.assertEqual(walking_minutes(north(80)), (1, False))
+        self.assertEqual(walking_minutes(north(90)), (2, False))
+        self.assertEqual(walking_minutes(north(1999)), (25, False))
+        self.assertEqual(walking_minutes(north(2000)), (25, False))
+        self.assertEqual(walking_minutes(north(2001)), (None, True))
+        with TestClient(create_app()) as client, patch("core.recommend.interpret", return_value=None) as ai:
+            payload = {"userId": "distance", "message": "7호관 2시간 사용할곳", "at": AT, "location": north(90)}
+            result = client.post("/api/chat", json=payload).json()
+            self.assertTrue(result["recommendations"])
+            self.assertTrue(all(room["walkMinutes"] == 2 for room in result["recommendations"]))
+            self.assertNotIn(str(INFO_LAT), str(ai.call_args))
+            self.assertNotIn(str(INFO_LNG), str(ai.call_args))
+            result = client.post("/api/chat", json={**payload, "location": north(2001)}).json()
+            self.assertIn("캠퍼스 밖", result["reply"])
+            self.assertTrue(all(room["walkMinutes"] is None for room in result["recommendations"]))
+
+    def test_current_floor_prioritizes_without_hard_filter(self):
+        from core.recommend import resolve_intent
+        previous = resolve_intent("7호관 2시간 사용할곳")[0]
+        resolved = resolve_intent("3층에 있어", previous)
+        self.assertIsNone(resolved[0].floor)
+        self.assertEqual(resolved[0].minutes, 120)
+        result = recommend("3층에 있어", parse_at(AT), [], resolved=resolved)
+        self.assertEqual(result["recommendations"][0]["floor"], 3)
+        self.assertIn("가까운 층 순서", result["reply"])
+        fourth = resolve_intent("3층에 있어. 4층에서 1시간 쓸 강의실")
+        self.assertEqual(fourth[0].floor, 4)
+        self.assertEqual(fourth[0].minutes, 60)

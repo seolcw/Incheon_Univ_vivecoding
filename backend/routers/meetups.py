@@ -1,6 +1,7 @@
 """모임 생성·조회·참여·나가기·취소. 요청/응답은 contracts/api.md를 따른다."""
 
 from datetime import datetime, time
+import re
 from typing import Annotated, Literal
 from uuid import uuid4
 
@@ -26,6 +27,15 @@ class UserRequest(ApiModel):
 
 class JoinRequest(UserRequest):
     nickname: str = Field(min_length=1, max_length=12)
+    avatar: str | None = Field(default=None, max_length=17)
+
+    @field_validator("avatar", mode="before")
+    @classmethod
+    def valid_avatar(cls, value):
+        # 상위 모델의 공백 제거 전에 원문 형식을 검사한다.
+        if value is not None and (not isinstance(value, str) or re.fullmatch(r"\d{1,2}(-\d{1,2}){5}", value) is None or len(value) > 17):
+            raise ValueError("아바타 형식이 올바르지 않아요.")
+        return value
 
 
 class CreateRequest(JoinRequest):
@@ -73,6 +83,7 @@ def serialize_meetup(record: MeetupRecord, campus: Campus) -> dict:
         raise ApiError("NOT_FOUND", 404, "건물 정보를 찾을 수 없어요.")
     return {
         **record, "roomName": room["name"], "buildingId": building["id"],
+        "members": [{**member, "avatar": member.get("avatar")} for member in record["members"]],
         "buildingName": building["name"], "floor": room["floor"],
         "memberCount": len(record["members"]), "isFull": len(record["members"]) >= record["maxMembers"],
     }
@@ -117,7 +128,7 @@ def create_meetup(body: CreateRequest, repo: RepoDep, campus: CampusDep, now: No
         "category": body.category, "description": body.description,
         "startAt": start.isoformat(), "endAt": end.isoformat(), "maxMembers": body.max_members,
         "hostId": body.user_id, "hostNickname": body.nickname,
-        "members": [{"userId": body.user_id, "nickname": body.nickname, "joinedAt": stamp}],
+        "members": [{"userId": body.user_id, "nickname": body.nickname, "joinedAt": stamp, "avatar": body.avatar}],
         "status": "open", "createdAt": stamp,
     }
 
@@ -147,7 +158,7 @@ def join_meetup(meetup_id: MeetupId, body: JoinRequest, repo: RepoDep, campus: C
             raise ApiError("MEETUP_CLOSED", 409, "종료되거나 취소된 모임이에요.")
         if len(record["members"]) >= record["maxMembers"]:
             raise ApiError("MEETUP_FULL", 409, "모임 정원이 찼어요.")
-        record["members"].append({"userId": body.user_id, "nickname": body.nickname, "joinedAt": now.isoformat()})
+        record["members"].append({"userId": body.user_id, "nickname": body.nickname, "joinedAt": now.isoformat(), "avatar": body.avatar})
         return record
     return {"meetup": serialize_meetup(repo.update(meetup_id, join), campus)}
 

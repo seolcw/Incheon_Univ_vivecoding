@@ -5,6 +5,14 @@ from datetime import datetime
 from . import seed_loader
 from .availability import as_seoul, room_status
 from .llm import SearchIntent, interpret
+from .location import walking_minutes
+
+CURRENT_FLOOR = r"(\d+)\s*층\s*(?:에\s*)?(?:있어|있는데|있음|있습니다|입니다|이야)"
+
+
+def current_floor(message: str) -> int | None:
+    match = re.search(CURRENT_FLOOR, message)
+    return int(match[1]) if match and 1 <= int(match[1]) <= 5 else None
 
 
 def any_floor(message: str) -> bool:
@@ -43,19 +51,21 @@ def fallback_intent(message: str) -> SearchIntent:
 
 def resolve_intent(message: str, previous: SearchIntent | None = None,
                    history: list[dict] | None = None) -> tuple[SearchIntent, str]:
-    rules = fallback_intent(message)
+    position_floor = current_floor(message)
+    conditions = re.sub(CURRENT_FLOOR, "", message) if position_floor is not None else message
+    rules = fallback_intent(conditions)
     ai = interpret(message, history=history)
     intent = (ai or rules).model_copy()
     duration = explicit_minutes(message)
-    floor_match = re.search(r"(\d+)\s*층", message)
+    floor_match = re.search(r"(\d+)\s*층", conditions)
     # 새 건물/독립된 장소 검색은 새 검색이다. 짧은 조건 수정만 직전 조건을 잇는다.
     follow_up = previous is not None and not re.search(r"호관|정보대|정보기술|공학관|도서관|인문대|경영대|자연대|처음부터|새로", message) and (
-        any_floor(message) or floor_match is not None or
+        any_floor(message) or floor_match is not None or position_floor is not None or
         (duration is not None and not re.search(r"강의실|공부|카공|스터디|자리|추천|사용할\s*곳", message))
     )
     # AI가 잡담으로 분류한 '공부하기 싫어/2시간 공부했어'를 키워드로 검색으로 바꾸지 않는다.
     short_condition = bool(re.fullmatch(r"(?:그럼\s*)?(?:\d+\s*층(?:은|으로|에서)?|\d+\s*(?:시간|분))(?:[?!？.!\s]*)", message))
-    if rules.intent == "search" and (ai is None or ai.intent == "search" or any_floor(message) or short_condition):
+    if position_floor is not None or (rules.intent == "search" and (ai is None or ai.intent == "search" or any_floor(message) or short_condition)):
         intent.intent = "search"
     if intent.intent != "search":
         # building/needsClarification은 검색에만 의미가 있다. 잡담을 막는 데 쓰지 않는다.
@@ -70,18 +80,18 @@ def resolve_intent(message: str, previous: SearchIntent | None = None,
         intent.building = previous.building
     intent.minutes = duration if duration is not None else previous.minutes if follow_up else intent.minutes
     intent.floor = (None if any_floor(message) else int(floor_match[1]) if floor_match else
-                    previous.floor if follow_up else intent.floor if "층" in message else None)
+                    None if position_floor is not None else previous.floor if follow_up else intent.floor if "층" in message else None)
     # 명확한 검색을 LLM의 임의 확인 플래그가 막지 못하게 한다.
     # 날짜/시작시각/지원 밖 층·시간은 규칙 검증을 계속 우선한다.
     intent.needsClarification = rules.needsClarification or (
-        intent.needsClarification and rules.intent != "search"
+        intent.needsClarification and rules.intent != "search" and position_floor is None
     )
     intent.facilitiesRequested = intent.facilitiesRequested or rules.facilitiesRequested
     return intent, "llm" if ai else "fallback"
 
 
 def recommend(message: str, at: datetime, meetups: list[dict], *, has_location: bool = False,
-              resolved: tuple[SearchIntent, str] | None = None) -> dict:
+              resolved: tuple[SearchIntent, str] | None = None, location: dict | None = None) -> dict:
     intent, source = resolved or resolve_intent(message)
 
     def answer(reply, rooms=None):
@@ -99,6 +109,8 @@ def recommend(message: str, at: datetime, meetups: list[dict], *, has_location: 
 
     minutes = intent.minutes
     floor = intent.floor
+    walk_minutes, outside = walking_minutes(location)
+    position_floor = current_floor(message)
     candidates = []
     for room in seed_loader.list_rooms():
         if room["buildingId"] != "eng" or (floor is not None and room["floor"] != floor):
@@ -118,16 +130,26 @@ def recommend(message: str, at: datetime, meetups: list[dict], *, has_location: 
         candidates.append({"roomId": room["id"], "roomName": room["name"],
             "buildingId": "eng", "buildingName": "정보대", "floor": room["floor"],
             "status": "empty", "freeUntil": until.isoformat(), "freeMinutes": available,
-            "walkMinutes": None, "reason": f"{until:%H:%M}까지 수업·모임 없이 {available}분 비어 있어."})
-    candidates.sort(key=lambda room: (-room["freeMinutes"], room["floor"], room["roomName"]))
+            "walkMinutes": walk_minutes, "reason": f"{until:%H:%M}까지 수업·모임 없이 {available}분 비어 있어."})
+    candidates.sort(key=lambda room: (abs(room["floor"] - position_floor) if position_floor else 0,
+                                     -room["freeMinutes"], room["floor"], room["roomName"]))
     chosen = candidates[:3]
     prefix = {"bright": "좋아, 공부할 자리를 밝혀줄게! 🔥", "calm": "천천히 살펴봤어. 🔥", "cheer": "공부하는 너를 응원해! 🔥"}[intent.mood]
     if not chosen:
-        return answer(f"앗, {at:%H:%M} 기준 정보대{' ' + str(floor) + '층' if floor else ''}에 연속 {minutes}분 비어 있는 강의실이 없어. 시간을 줄이거나 층 조건을 바꿔볼까?")
+        unavailable = f"앗, {at:%H:%M} 기준 정보대{' ' + str(floor) + '층' if floor else ''}에 연속 {minutes}분 비어 있는 강의실이 없어. 시간을 줄이거나 층 조건을 바꿔볼까?"
+        if outside:
+            unavailable += " 캠퍼스 밖(정보대에서 2km 초과)이어서 도보 시간은 안내하지 않아."
+        return answer(unavailable)
     reply = f"{prefix} {at:%H:%M} 기준, {minutes}분 이상 비어 있는 정보대 {str(floor) + '층' if floor else '전체 층'} 강의실이야."
+    if outside:
+        reply += " 캠퍼스 밖(정보대에서 2km 초과)이어서 도보 시간은 안내하지 않아."
+    elif walk_minutes is not None:
+        reply += f" 건물까지 도보 약 {walk_minutes}분(직선거리 환산)이야."
+    if position_floor is not None:
+        reply += f" 네가 말한 {position_floor}층에서 가까운 층 순서야."
     if intent.facilitiesRequested:
         reply += " 조용함·콘센트·좌석 정보는 없어서 현장에서 확인해 줘."
-    if has_location or re.search(r"가까|근처|주변|GPS|gps", message):
+    if location is None and (has_location or re.search(r"가까|근처|주변|GPS|gps", message)):
         reply += " 정보대 한 건물만 비교해. 실내 거리 순서는 알 수 없어."
     reply += " 카드에서 시간표를 확인해 줘!"
     return answer(reply, chosen)
