@@ -83,3 +83,34 @@
 - API 영향: 동일 /api/chat. 첫 공개 호출은 key_not_configured로 fallback임을 확인했고 성공으로 처리하지 않음. 변수명 교정 후 실제 AI 의도 해석 성공.
 - 확인 방법: 공개 Chrome에서 ‘3층에서 2시간 공부할 곳’ 클릭 → 처리 중 이미지 → ‘AI 의도 해석 · 시간표 검증’ 표시와 3층120분 이상 카드304/316/317 확인. 304호 카드 클릭 후 시연14:10을 유지한 실제 강의실 상세 이동, 대화 재오픈 시 기록 유지 확인. 로컬 source=fallback와 공개 실제 LLM source를 구분해 확인. API 키·질문·서비스계정 내용을 로그에 기록하지 않음. 로컬 검증 서버 종료.
 - 남은 문제: GPS 실내 거리 및 다른 건물은 이번 범위 제외. 다음 질문에 이전 대화 문맥을 전달하지 않으므로 매번 시간·층을 함께 입력. 무료 서버 첫 접속 지연과 프로세스 재시작 시 호출 제한 초기화. API 사용량은 사용자의 OpenAI 프로젝트에서 관리. 37개 테스트·프론트 build·lint 통과, 진단 변경 후 관련5개 재통과. UI 증거는 저장소 밖 torch-on-live.jpg에 저장.
+
+## 13:22 횃불이 옆 작은 채팅창으로 조정
+- 바뀐 것: 사용자 배치 요청에 따라 frontend/src/components/torch-chat.tsx의 큰 Dialog를 작은 비모달 패널로 변경. 우하단에는 횃불이만 고정하고 클릭하면 왼쪽320px 대화창. 배경 가림·홍보 문구·질문 예시 버튼 제거. Enter 전송(한글 조합 중 제외), Esc 닫기·초점 복귀, 재오픈 내역 유지. docs/torch-on.md 사용법 갱신.
+- API 영향: 없음. 추천·DB·백엔드 변경 없음, 새 패키지 없음.
+- 확인 방법: frontend production build와 ESLint 통과. 로컬 프론트→공개 API의 실제 OpenAI 추천으로 3층120분 이상304/316/317 확인. 패널을 연 채 배경 정보대 지도 클릭→건물 화면 이동, Esc 접기와 횃불이 재클릭 시 대화 유지 확인. 공개 프론트 배포는 이어서 진행.
+
+## 13:27 작은 횃불이 채팅 공개 배포 완료
+- 작업 중 별도 통합에서 be-a가 origin/main 64eac9b로 갱신되고 UI 수정이 stash b1107c5에 보관됨을 확인. 변경 없는 torch-chat.tsx만 해당 stash에서 복원하고 다른 지도 변경·stash는 보존. 기존 lockfile로 npm ci 후 통합 build·ESLint 재통과.
+- 47b05ab를 origin/be-a에 push하고 Render bingang-web 배포 성공 확인. 공개 페이지에서 3D 지도와 우하단 마스코트·왼쪽 작은 패널, 실제 AI 추천(3층120분 이상304/317/302)을 확인. 결과는 당시 모임 상태에 따라 달라짐. 증거 화면은 저장소 밖 torch-compact-live.jpg에 저장. 로컬 검증 서버 종료. API 계약·추천 로직은 이번 변경에서 수정하지 않음.
+
+## 13:43 횃불이 층 생략·후속 조건 오류 수정
+- 바뀐 것: 사용자 오류 화면을 기준으로 core/llm.py·recommend.py를 수정. ‘7호관 2시간 이상 사용할곳’에 층을 필수로 요구하지 않게 하고 잘못된 AI 확인 플래그를 명확한 검색 규칙으로 보정. core/chat_context.py와 routes_chat.py, main.py에 사용자별 직전 조건(10분, 최대256명) 연결. ‘층 상관 없어’는 이전 이용 시간을 유지하며 전체 층 검색. 새 패키지 없음.
+- API 영향: 경로·필드·타입·오류 형식 유지. 초기 단일 턴 동작에서 짧은 검색 조건 이어받기로 보완(사용자 요청). 원문 대화·DB 저장 없음, 기존 익명 userId를 사용하므로 같은 브라우저 탭끼리 조건 공유. 새 날짜·만료·재시작 시 초기화.
+- 확인 방법: test_chat 8개 통과(추가3개: AI 잘못된 되묻기, 실제 라우트의 후속 조건/사용자 분리, TTL/용량). 전체41개 중40개 통과, 기존 test_core.test_main_app_routes_errors_and_post_cors는 backend.core fixture와 main의 core import가 달라404이며 아직 무본문 /api/chat을200 스텁으로 기대함. 해당 테스트·검사를 약화하거나 삭제하지 않음. 최초 backend/ 실행 시 패키지 import 오류는 PYTHONPATH에 루트와 backend를 지정해 해결.
+- 남은 문제: 실제 OpenAI 공개 배포 검증 진행 중. 전체 대화 의미를 기억하는 기능은 아니며 직전 이용 시간·층 조건만 이어받는다.
+
+## 13:46 동일 사용자 문장으로 공개 AI 재검증 완료
+- 8975973 push 및 Render bingang-api Deploy succeeded/Live 확인. 공개 웹에서 ‘7호관 2시간 이상 사용할곳’ → 실제 AI 추천, 전체 층120분 이상101/102/105호 표시. 이어 ‘층 상관 없어’ → 같은120분·전체 층 조건과 추천 카드 유지. 불필요한 층 질문 반복이 사라짐을 확인.
+- 프론트 변경·재배포 없이 기존 /api/chat을 사용. 검증 화면은 저장소 밖 torch-followup-fixed.jpg. 키·원문 운영 로그 추가 없음. 기존 통합 테스트1개의 fixture/import·스텁 기대값 문제는 위 기록대로 남아 있으며 챗봇 관련8개는 통과.
+
+## 13:56 횃불이 일반 대화와 짧은 문맥 연결
+- 바뀐 것: 사용자 요청으로 AI가 chat 의도의 실제 reply를 생성하도록 llm.py·recommend.py 변경. 잡담은 건물/시간 제약으로 막지 않으며 검색 답변은 계속 서버 데이터로 생성. chat_context.py에 최근3턴·10분 유효·최대256명 문맥 추가, routes_chat.py에서 일반 대화는 DB 조회 생략. frontend 대화/추천 라벨과 로딩 문구 개선. 새 패키지 없음.
+- API 영향: 요청·응답 필드 및200자 reply 제한 유지. 내부 모델에 chat/reply 추가, 최대출력350→700토큰. 한 요청당 호출1회와 기존 호출 한도 유지. 최근 대화 원문은 메모리와 OpenAI 문맥에만 사용하며 DB/로그 저장 없음. 관련 문서/프롬프트 갱신.
+- 확인 방법: 관련 백엔드27개(챗봇11개 포함), frontend build·lint 통과. 잡담에 잘못된 building=other/clarification=true가 있어도 생성 답변을 반환하고 DB 미조회, 최근3턴 전달·사용자 분리, 검색에 AI가 만든999호 문장을 쓰지 않음을 검증. 이전에 확인한 test_core의 통합 fixture/import·스텁 기대값 문제는 별개로 유지.
+- 남은 문제: 공개 실제 AI 배포 검증 진행 중. 문맥은 재시작/만료/날짜 변경 시 초기화되고 같은 userId의 탭끼리는 공유한다.
+
+## 13:27 main 통합 배포 및 공개 모임 초기화
+- 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
+- API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
+- 확인 방법: Firestore 직접 조회 및 공개 API includePast=true에서 demo-m1 하나 확인. 재배포 후 health200, X-Campus-Source=seed, 302호 empty·140분, 정보대26개 중 수업 없는 방13개 확인. 공개 브라우저에서 3D 지도와 횃불ON 표시 확인, 스크린샷은 저장소 밖 main-integration-live.jpg. Render 프론트 production build 성공. 통합 unittest는 루트와 backend를 PYTHONPATH에 함께 넣어 실행하여 38개 중37개 통과.
+- 남은 문제: B 소유 tests/test_core.py의 test_main_app_routes_errors_and_post_cors는 backend.core에 적용한 fixture와 main이 사용하는 core 경로가 달라 가상 buildingId=8이404이며, 마지막 chat 무본문200 기대도 실제400 계약과 다름. 담당 범위 밖이므로 미수정, B에게 조정 필요. 두 물리 기기 시연은 사용자가 이어서 확인.

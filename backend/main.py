@@ -94,6 +94,8 @@ def create_app(*, repo: MeetupRepo | None = None, campus: Campus | None = None) 
         from core.routes_rooms import router as rooms_router
         application.include_router(rooms_router)
         from core.routes_chat import router as chat_router
+        from core.chat_context import ChatContexts
+        application.state.chat_contexts = ChatContexts()
         application.include_router(chat_router)
 
     @application.get("/api/health", response_model=HealthResponse)
