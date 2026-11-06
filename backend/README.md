@@ -1,6 +1,6 @@
 # 모임 API와 공유 접속 — be-a 창원
 
-프론트 `origin/fe`(1c967af)와 B `origin/be-b`(a52e6e2)를 통합했다. 최신 `docs/scope-change.md`에 맞춰 정보대 강의실 26개를 시작할 때 로드하고, 모임은 Firestore에 저장한다. 채팅은 이번 범위에 없다.
+최종 기능 통합 커밋 `6efc2b6`을 be-a에 반영하고 웹/API 모두 배포했다. `docs/scope-change.md`에 맞춰 정보대 강의실 26개를 시작할 때 로드하고, 모임은 Firestore에 저장한다. 횃불이 AI 대화는 제공하며 모임원 간 채팅은 이번 범위에 없다. 최신 제출 안내는 루트 README를 참고한다.
 
 ## 공개 주소 (2026-11-06 배포·검증)
 
@@ -71,7 +71,7 @@ $env:PYTHONPATH = (Resolve-Path ..).Path
 .venv\Scripts\python -m scripts.verify_firestore --base-url 'https://실제-백엔드-주소'
 ```
 
-32개 단위/통합 검사와 프론트 production build 통과. 실제 Firestore 검사에서 26개 방 조회, 별도 요청의 모임 조회, 생성201, 다른 userId 참여200(1→2), 중복 참여 인원 유지, 로컬 서버 재시작 후 유지 확인. 검증 스크립트는 고유 hostId로 생성한 자기 검증 문서만 정리한다. 기존 모임과 demo-m1을 초기화하지 않는다.
+초기 32개 단위/통합 검사와 프론트 production build 통과 이력이 있다. 최신 아바타·챗봇·모임 관련 검사 31개가 통과했으며 전체 검사에서는 `tests/test_core.py`의 통합 fixture/import 경로와 이전 스텁 기대값 문제 1개가 남아 있다. 실제 Firestore 검사에서 26개 방 조회, 별도 요청의 모임 조회, 생성201, 다른 userId 참여200(1→2), 중복 참여 인원 유지, 로컬 서버 재시작 후 유지 확인. 새 아바타 저장 검사는 memory API와 모의 Firestore 어댑터 기준이며 공개 API의 avatar 응답 필드도 확인했다. 검증 스크립트는 고유 hostId로 생성한 자기 검증 문서만 정리한다. 기존 모임과 demo-m1을 초기화하지 않는다.
 
 출처: [FastAPI 예외 처리](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Render FastAPI 배포](https://render.com/docs/deploy-fastapi). 외부 구현 코드는 복사하지 않았다.
 

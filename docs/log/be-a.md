@@ -130,3 +130,9 @@
 - API 영향: 기존 통합 계약 그대로. 공개 health200, X-Campus-Source=seed, 실제 모임 조회와 members.avatar 필드 확인. API 배포57초, 웹 배포1분29초로 완료.
 - 확인 방법: Render 배포 상세와 공개 API 조회. 폰·두 물리 기기 시연은 사용자가 이어 확인. 배포 완료 즉시 사용자에게 알림.
 - 남은 작업: 오늘14:50 시험 모임 초기화 1회 자동화(id14-50)를 이 채팅에 등록. STORAGE=firestore/CAMPUS_SOURCE=seed 및 기존 seed_demo --reset-contest-meetups 사용, demo-m1만 남기고 검증 예정. 현재 초기화는 실행하지 않음. 지연으로15:00이 지나면 삭제하지 않도록 제한.
+
+## 14:44 제출용 저장소 안내 최신화
+- 바뀐 것: 루트 README를 현재 서비스·공개 시연 링크·기능·스택·PowerShell 실행·문서/출처 중심으로 갱신. 기존 디자인 도구 안내는 접힌 부록으로 보존. backend/README.md의 통합 버전과 AI 대화 범위·검증 상태를 정정.
+- API 영향: 없음. frontend 및 실행 코드는 수정하지 않음. 제출 main에 최신 be-a 기록과 문서를 반영할 예정.
+- 확인 방법: 문서 내부 링크와 git diff 검사, 원격 main 갱신 결과 확인. 이미 배포한6efc2b6과 실행 코드 차이 없음.
+- 남은 문제: 기존 test_core 통합 검사1개 문제를 숨기지 않고 README에 기록.14:50 초기화는 예약 상태이며 아직 실행 전.
