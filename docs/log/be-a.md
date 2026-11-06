@@ -88,3 +88,9 @@
 - 바뀐 것: 사용자 배치 요청에 따라 frontend/src/components/torch-chat.tsx의 큰 Dialog를 작은 비모달 패널로 변경. 우하단에는 횃불이만 고정하고 클릭하면 왼쪽320px 대화창. 배경 가림·홍보 문구·질문 예시 버튼 제거. Enter 전송(한글 조합 중 제외), Esc 닫기·초점 복귀, 재오픈 내역 유지. docs/torch-on.md 사용법 갱신.
 - API 영향: 없음. 추천·DB·백엔드 변경 없음, 새 패키지 없음.
 - 확인 방법: frontend production build와 ESLint 통과. 로컬 프론트→공개 API의 실제 OpenAI 추천으로 3층120분 이상304/316/317 확인. 패널을 연 채 배경 정보대 지도 클릭→건물 화면 이동, Esc 접기와 횃불이 재클릭 시 대화 유지 확인. 공개 프론트 배포는 이어서 진행.
+
+## 13:27 main 통합 배포 및 공개 모임 초기화
+- 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
+- API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
+- 확인 방법: Firestore 직접 조회 및 공개 API includePast=true에서 demo-m1 하나 확인. 재배포 후 health200, X-Campus-Source=seed, 302호 empty·140분, 정보대26개 중 수업 없는 방13개 확인. 공개 브라우저에서 3D 지도와 횃불ON 표시 확인, 스크린샷은 저장소 밖 main-integration-live.jpg. Render 프론트 production build 성공. 통합 unittest는 루트와 backend를 PYTHONPATH에 함께 넣어 실행하여 38개 중37개 통과.
+- 남은 문제: B 소유 tests/test_core.py의 test_main_app_routes_errors_and_post_cors는 backend.core에 적용한 fixture와 main이 사용하는 core 경로가 달라 가상 buildingId=8이404이며, 마지막 chat 무본문200 기대도 실제400 계약과 다름. 담당 범위 밖이므로 미수정, B에게 조정 필요. 두 물리 기기 시연은 사용자가 이어서 확인.
