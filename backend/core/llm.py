@@ -28,7 +28,12 @@ SYSTEM_PROMPT = """너는 횃불ON의 검색 의도 해석기다. 페르소나�
 JSON 스키마만 출력한다. 검색 요청은 search, 인사·응원·자기소개는 greeting,
 학교 행정 등 관계없는 질문은 out_of_scope. 7호관=info, 다른 건물=other.
 minutes는 연속 사용 희망 분, 없으면 15. 두 시간=120, 한 시간 반=90.
-floor는 요청한 층만, 없으면 null. 다른 날짜/시작시각/모호한 시간/지원 밖 층이면
+floor는 요청한 층만, 없거나 '층 상관 없어'이면 null(전체 층). 층은 필수가 아니다.
+'7호관 2시간 이상 사용할곳'은 search, info, minutes=120, floor=null,
+needsClarification=false다. '이상'은 최소 이용 시간이며 모호한 시간이 아니다.
+'층 상관 없어', '그럼 1시간', '3층은?'도 검색 조건 수정이므로 search다.
+생략된 시간은 15분, 층은 전체 층으로 검색하므로 생략만으로 되묻지 않는다.
+다른 날짜/특정 시작시각/해석 불가능한 시간/지원 밖 층일 때만
 needsClarification=true. 콘센트·조용함·정원 등 시설 요청은 facilitiesRequested=true.
 사용자 기분에 맞춰 mood를 bright/calm/cheer 중 고른다. 강의실·시간·거리 답변을 생성하지 않는다."""
 

@@ -93,6 +93,12 @@
 - 작업 중 별도 통합에서 be-a가 origin/main 64eac9b로 갱신되고 UI 수정이 stash b1107c5에 보관됨을 확인. 변경 없는 torch-chat.tsx만 해당 stash에서 복원하고 다른 지도 변경·stash는 보존. 기존 lockfile로 npm ci 후 통합 build·ESLint 재통과.
 - 47b05ab를 origin/be-a에 push하고 Render bingang-web 배포 성공 확인. 공개 페이지에서 3D 지도와 우하단 마스코트·왼쪽 작은 패널, 실제 AI 추천(3층120분 이상304/317/302)을 확인. 결과는 당시 모임 상태에 따라 달라짐. 증거 화면은 저장소 밖 torch-compact-live.jpg에 저장. 로컬 검증 서버 종료. API 계약·추천 로직은 이번 변경에서 수정하지 않음.
 
+## 13:43 횃불이 층 생략·후속 조건 오류 수정
+- 바뀐 것: 사용자 오류 화면을 기준으로 core/llm.py·recommend.py를 수정. ‘7호관 2시간 이상 사용할곳’에 층을 필수로 요구하지 않게 하고 잘못된 AI 확인 플래그를 명확한 검색 규칙으로 보정. core/chat_context.py와 routes_chat.py, main.py에 사용자별 직전 조건(10분, 최대256명) 연결. ‘층 상관 없어’는 이전 이용 시간을 유지하며 전체 층 검색. 새 패키지 없음.
+- API 영향: 경로·필드·타입·오류 형식 유지. 초기 단일 턴 동작에서 짧은 검색 조건 이어받기로 보완(사용자 요청). 원문 대화·DB 저장 없음, 기존 익명 userId를 사용하므로 같은 브라우저 탭끼리 조건 공유. 새 날짜·만료·재시작 시 초기화.
+- 확인 방법: test_chat 8개 통과(추가3개: AI 잘못된 되묻기, 실제 라우트의 후속 조건/사용자 분리, TTL/용량). 전체41개 중40개 통과, 기존 test_core.test_main_app_routes_errors_and_post_cors는 backend.core fixture와 main의 core import가 달라404이며 아직 무본문 /api/chat을200 스텁으로 기대함. 해당 테스트·검사를 약화하거나 삭제하지 않음. 최초 backend/ 실행 시 패키지 import 오류는 PYTHONPATH에 루트와 backend를 지정해 해결.
+- 남은 문제: 실제 OpenAI 공개 배포 검증 진행 중. 전체 대화 의미를 기억하는 기능은 아니며 직전 이용 시간·층 조건만 이어받는다.
+
 ## 13:27 main 통합 배포 및 공개 모임 초기화
 - 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
