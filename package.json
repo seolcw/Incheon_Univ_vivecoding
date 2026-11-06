@@ -1,0 +1,14 @@
+{
+  "name": "vibe-coding-2026",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Project-local frontend design skills and browser checks",
+  "scripts": {
+    "design:hallmark": "node .claude/skills/hallmark/scripts/sloplint.mjs",
+    "design:detect": "sh .claude/skills/impeccable/scripts/impeccable detect",
+    "design:capture": "node .claude/skills/hallmark/scripts/capture.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "25.16.0"
+  }
+}

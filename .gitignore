@@ -1,0 +1,40 @@
+node_modules/
+.DS_Store
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+.hallmark/shots/
+.hallmark/before/
+# Impeccable runtime data; keep shared design decisions in git.
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+**/.impeccable/*.png
+**/.impeccable/review/
+**/.impeccable/questions/
+**/.impeccable/live/server.json
+**/.impeccable/live/sessions/
+**/.impeccable/live/previews/
+**/.impeccable/live/annotations/
+**/.impeccable/live/cache/
+**/.impeccable/live/manual-edit-apply-transaction.json
+**/.impeccable/live/manual-edit-events.jsonl
+**/.impeccable/live/manual-edit-evidence/
+**/.impeccable/live/pending-manual-edits.json
+**/.impeccable/live/deferred-svelte-component-accepts.json
+**/.impeccable/live/*.png
+
+# Python / Next.js
+.venv/
+__pycache__/
+*.pyc
+.next/
+.vercel/
+
+# Firebase 서비스 계정 키는 절대 커밋하지 않는다
+*firebase-adminsdk*.json
+*service-account*.json
+
+# Mac 전용 실행 파일 (17MB, 팀원에게 불필요)
+.claude/skills/impeccable/scripts/bin/
