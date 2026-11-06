@@ -1,3 +1,4 @@
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
@@ -5,7 +6,6 @@ import { DemoAtGate, DemoAtSync } from "@/components/demo-at";
 import { NicknameDialog } from "@/components/nickname-dialog";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
-import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
