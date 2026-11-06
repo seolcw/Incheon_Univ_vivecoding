@@ -124,3 +124,9 @@
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
 - 확인 방법: Firestore 직접 조회 및 공개 API includePast=true에서 demo-m1 하나 확인. 재배포 후 health200, X-Campus-Source=seed, 302호 empty·140분, 정보대26개 중 수업 없는 방13개 확인. 공개 브라우저에서 3D 지도와 횃불ON 표시 확인, 스크린샷은 저장소 밖 main-integration-live.jpg. Render 프론트 production build 성공. 통합 unittest는 루트와 backend를 PYTHONPATH에 함께 넣어 실행하여 38개 중37개 통과.
 - 남은 문제: B 소유 tests/test_core.py의 test_main_app_routes_errors_and_post_cors는 backend.core에 적용한 fixture와 main이 사용하는 core 경로가 달라 가상 buildingId=8이404이며, 마지막 chat 무본문200 기대도 실제400 계약과 다름. 담당 범위 밖이므로 미수정, B에게 조정 필요. 두 물리 기기 시연은 사용자가 이어서 확인.
+
+## 14:31 최종 main 통합 재배포
+- 바뀐 것: 사용자 요청 origin/main 6efc2b6을 be-a에 fast-forward 병합하고 push. frontend 직접 편집 없이 Render bingang-web과 bingang-api 모두 6efc2b6 Deploy succeeded/Live 확인.
+- API 영향: 기존 통합 계약 그대로. 공개 health200, X-Campus-Source=seed, 실제 모임 조회와 members.avatar 필드 확인. API 배포57초, 웹 배포1분29초로 완료.
+- 확인 방법: Render 배포 상세와 공개 API 조회. 폰·두 물리 기기 시연은 사용자가 이어 확인. 배포 완료 즉시 사용자에게 알림.
+- 남은 작업: 오늘14:50 시험 모임 초기화 1회 자동화(id14-50)를 이 채팅에 등록. STORAGE=firestore/CAMPUS_SOURCE=seed 및 기존 seed_demo --reset-contest-meetups 사용, demo-m1만 남기고 검증 예정. 현재 초기화는 실행하지 않음. 지연으로15:00이 지나면 삭제하지 않도록 제한.
