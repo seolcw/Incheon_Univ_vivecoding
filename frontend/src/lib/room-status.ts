@@ -29,6 +29,11 @@ export const ROOM_STATUS_META: Record<RoomStatusValue, { label: string; badgeCla
 const CLOSE_CLOCK = "22:00";
 const GENERIC_CLASS_TITLE = "수업";
 
+/** 층 표기. 지하는 API에서 음수로 온다(-1 → B1층). */
+export function floorLabel(floor: number): string {
+  return floor < 0 ? `B${-floor}층` : `${floor}층`;
+}
+
 /** 카드와 상세에 쓰는 한 줄 설명 */
 export function describeRoom(room: RoomStatus): string {
   switch (room.status) {

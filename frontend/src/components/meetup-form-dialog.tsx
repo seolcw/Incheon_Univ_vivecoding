@@ -14,7 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createMeetup, USE_MOCK, useRooms } from "@/lib/api";
+import { DEMO_BUILDING_ID } from "@/lib/demo-building";
 import { MEETUP_CATEGORIES } from "@/lib/meetup";
+import { floorLabel } from "@/lib/room-status";
 import { clockToMinutes, formatKstTime, kstDate, minutesToClock } from "@/lib/time";
 import type { MeetupCategory, RoomStatus } from "@/lib/types";
 import { useWriteAction } from "@/lib/use-write-action";
@@ -42,7 +44,7 @@ function defaultSlot(room: RoomStatus | undefined, at: string) {
 }
 
 function roomOptionLabel(room: RoomStatus) {
-  return `${room.floor}층 ${room.name} · ${room.freeMinutes}분`;
+  return `${floorLabel(room.floor)} ${room.name} · ${room.freeMinutes}분`;
 }
 
 function validate(title: string, start: string, end: string, maxMembers: number) {
@@ -57,8 +59,8 @@ function validate(title: string, start: string, end: string, maxMembers: number)
 
 function MeetupForm({ fixedRoom, at, onDone }: { fixedRoom?: RoomStatus; at: string; onDone: () => void }) {
   const { pending, run } = useWriteAction();
-  // 고정된 강의실이 없으면(모임 목록) 수업 없는 방 중에서 고른다.
-  const emptyRooms = useRooms(fixedRoom ? null : { status: "empty" });
+  // 고정된 강의실이 없으면(모임 목록) 시연 건물의 수업 없는 방 중에서 고른다.
+  const emptyRooms = useRooms(fixedRoom ? null : { buildingId: DEMO_BUILDING_ID, status: "empty" });
   const [pickedRoomId, setPickedRoomId] = useState<string | null>(null);
   const room = fixedRoom ?? emptyRooms.data?.rooms.find((item) => item.id === pickedRoomId);
 
@@ -120,7 +122,7 @@ function MeetupForm({ fixedRoom, at, onDone }: { fixedRoom?: RoomStatus; at: str
         <DialogTitle>모임 만들기</DialogTitle>
         <DialogDescription>
           {fixedRoom
-            ? `${fixedRoom.buildingName} ${fixedRoom.floor}층 ${fixedRoom.name} · ${kstDate(at)}`
+            ? `${fixedRoom.buildingName} ${floorLabel(fixedRoom.floor)} ${fixedRoom.name} · ${kstDate(at)}`
             : `${kstDate(at)} 모임을 만들어요.`}
         </DialogDescription>
       </DialogHeader>

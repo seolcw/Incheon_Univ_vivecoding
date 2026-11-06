@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBuildings, useRooms } from "@/lib/api";
 import { getFloorPlan } from "@/lib/floor-plans";
+import { floorLabel } from "@/lib/room-status";
 
 const LOADING_MESSAGE = "강의실 상태를 확인하는 중이에요.";
 const ERROR_MESSAGE = "강의실 정보를 불러오지 못했어요.";
@@ -65,7 +66,7 @@ export function BuildingScreen() {
         <h1 className="text-xl font-bold">{building.name}</h1>
         {summary && (
           <p className="text-sm text-muted-foreground">
-            {floor}층 수업 없는 강의실 {summary.emptyCount}/{summary.totalCount}개(모임 포함)
+            {floorLabel(floor)} 수업 없는 강의실 {summary.emptyCount}/{summary.totalCount}개(모임 포함)
           </p>
         )}
       </div>
@@ -74,7 +75,7 @@ export function BuildingScreen() {
         <TabsList aria-label="층 선택">
           {building.floors.map((item) => (
             <TabsTrigger key={item} value={item} className="px-3">
-              {item}층
+              {floorLabel(item)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -104,16 +105,20 @@ export function BuildingScreen() {
 
       {allRooms.data && (
         <>
-          {plan && (
-            <FloorPlanView
-              plan={plan}
-              rooms={allRooms.data.rooms}
-              matchingRoomIds={isFiltering && cardRooms ? new Set(cardRooms.map((room) => room.id)) : undefined}
-            />
+          {plan ? (
+            <>
+              <FloorPlanView
+                plan={plan}
+                rooms={allRooms.data.rooms}
+                matchingRoomIds={isFiltering && cardRooms ? new Set(cardRooms.map((room) => room.id)) : undefined}
+              />
+              <RoomStatusLegend />
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">이 건물의 도면은 준비 중이에요. 강의실 목록으로 확인해 주세요.</p>
           )}
-          <RoomStatusLegend />
 
-          <section aria-label={`${floor}층 강의실 목록`} className="flex flex-col gap-3">
+          <section aria-label={`${floorLabel(floor)} 강의실 목록`} className="flex flex-col gap-3">
             <h2 className="font-bold">강의실 목록</h2>
             {!cardRooms && !filteredRooms.error && <LoadingState message={LOADING_MESSAGE} />}
             {!cardRooms && filteredRooms.error && (

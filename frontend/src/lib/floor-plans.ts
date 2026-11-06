@@ -1,8 +1,11 @@
-// 정보대 층별 도면 데이터. docs/reference/floor-plans/floor-{1..5}.jpg를 보고 옮긴 단순 도형이다.
+// 시연 건물의 층별 도면 데이터. docs/reference/floor-plans/floor-{1..5}.jpg를 보고 옮긴 단순 도형이다.
+// 칸과 강의실은 층과 name("302호")으로 연결한다. API의 강의실 id는 해석하지 않는다.
 // 좌표는 프론트 전용이고 API에 없다(docs/scope-change.md). 사진의 원근을 펴고 세로를 줄였으며, 축척은 정확하지 않다.
 //
 // 공통 열(x): A동 왼쪽 10–140 / A동 복도 140–180 / A동 오른쪽 180–305 / 중정 / B동 왼쪽 635–760 / B동 복도 760–800 / B동 오른쪽 800–930
 // 연결부 강의실: 180–760
+
+import { DEMO_BUILDING_ID } from "@/lib/demo-building";
 
 export type PlanCellKind =
   | "room" // 호수가 있는 방
@@ -15,8 +18,8 @@ export type PlanCellKind =
 
 export interface PlanCell {
   kind: PlanCellKind;
-  /** room일 때 강의실 id와 표시 호수 */
-  roomId?: string;
+  /** room일 때 API의 강의실 name("302호")과 칸에 쓸 호수("302") */
+  roomName?: string;
   label?: string;
   x: number;
   y: number;
@@ -40,7 +43,7 @@ export const PLAN_VIEWBOX = { w: 940, h: 830 };
 
 const room = (number: string, x: number, y: number, w: number, h: number): PlanCell => ({
   kind: "room",
-  roomId: `eng-${number}`,
+  roomName: `${number}호`,
   label: number,
   x,
   y,
@@ -423,7 +426,7 @@ const FLOOR_5: FloorPlan = {
 };
 
 const FLOOR_PLANS: Record<string, FloorPlan[]> = {
-  eng: [FLOOR_1, FLOOR_2, FLOOR_3, FLOOR_4, FLOOR_5],
+  [DEMO_BUILDING_ID]: [FLOOR_1, FLOOR_2, FLOOR_3, FLOOR_4, FLOOR_5],
 };
 
 export function getFloorPlan(buildingId: string, floor: number): FloorPlan | undefined {

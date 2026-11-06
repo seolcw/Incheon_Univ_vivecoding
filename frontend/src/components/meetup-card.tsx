@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { cancelMeetup, joinMeetup, leaveMeetup, USE_MOCK } from "@/lib/api";
 import { categoryLabel, meetupPhase, meetupTimeRange } from "@/lib/meetup";
+import { floorLabel } from "@/lib/room-status";
 import type { Meetup } from "@/lib/types";
 import { useWriteAction } from "@/lib/use-write-action";
 import { getUser, useUserId } from "@/lib/user";
@@ -70,7 +71,7 @@ export function MeetupCard({ meetup, at, showRoom = true }: { meetup: Meetup; at
             prefetch={false}
             className="rounded-sm font-medium underline underline-offset-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
-            {meetup.buildingName} {meetup.floor}층 {meetup.roomName}
+            {meetup.buildingName} {floorLabel(meetup.floor)} {meetup.roomName}
           </Link>
         )}
         <p className="tabular-nums">{meetupTimeRange(meetup)}</p>
