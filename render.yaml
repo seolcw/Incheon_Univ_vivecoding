@@ -11,9 +11,11 @@ services:
       - key: PYTHON_VERSION
         value: 3.12.14
       - key: STORAGE
-        value: memory
+        value: firestore
       - key: CAMPUS_SOURCE
-        value: demo
+        value: seed
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
       - key: TZ
         value: Asia/Seoul
       - key: CORS_ORIGINS

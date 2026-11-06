@@ -5,8 +5,8 @@ import argparse
 from meetup_repo import MeetupRecord, MeetupRepo, get_repo, storage_mode
 
 
-def demo_meetup() -> MeetupRecord:
-    return {
+def demo_meetup(campus_source: str = "demo") -> MeetupRecord:
+    record: MeetupRecord = {
         "id": "demo-m1", "roomId": "eng-303", "title": "카공 모여라", "category": "study",
         "description": "조용히 각자 공부해요. 콘센트 자리 있음",
         "startAt": "2026-11-06T15:00:00+09:00", "endAt": "2026-11-06T17:00:00+09:00",
@@ -14,11 +14,16 @@ def demo_meetup() -> MeetupRecord:
         "members": [{"userId": "u-demo-host", "nickname": "민지", "joinedAt": "2026-11-06T14:58:00+09:00"}],
         "status": "open", "createdAt": "2026-11-06T14:58:00+09:00",
     }
+    if campus_source == "seed":
+        record.update(roomId="eng-316", startAt="2026-11-10T14:00:00+09:00",
+                      endAt="2026-11-10T16:00:00+09:00", createdAt="2026-11-10T13:58:00+09:00")
+        record["members"][0]["joinedAt"] = "2026-11-10T13:58:00+09:00"
+    return record
 
 
-def seed_memory(repo: MeetupRepo) -> None:
+def seed_memory(repo: MeetupRepo, campus_source: str = "demo") -> None:
     if repo.get("demo-m1") is None:
-        repo.save(demo_meetup())
+        repo.save(demo_meetup(campus_source))
 
 
 def main() -> None:
@@ -30,7 +35,8 @@ def main() -> None:
     if not args.reset_contest_meetups:
         parser.error("대회 전용 DB인지 확인한 뒤 --reset-contest-meetups를 지정하세요.")
     repo = get_repo()
-    repo.save(demo_meetup())
+    import os
+    repo.save(demo_meetup(os.environ.get("CAMPUS_SOURCE", "seed")))
     for record in repo.list_all():
         if record["id"] != "demo-m1":
             repo.delete(record["id"])

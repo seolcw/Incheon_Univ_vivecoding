@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 from starlette.exceptions import HTTPException
+from starlette.concurrency import run_in_threadpool
 
 from errors import (
     ApiError,
@@ -40,16 +41,19 @@ class HealthResponse(BaseModel):
 
 def create_app(*, repo: MeetupRepo | None = None, campus: Campus | None = None) -> FastAPI:
     selected_storage = storage_mode()
-    campus_source = os.environ.get("CAMPUS_SOURCE", "core").strip().lower()
-    if campus_source not in ("core", "demo"):
-        raise ValueError("CAMPUS_SOURCE는 core 또는 demo여야 합니다.")
+    campus_source = os.environ.setdefault("CAMPUS_SOURCE", "seed").strip().lower()
+    if campus_source not in ("seed", "firestore", "demo"):
+        raise ValueError("CAMPUS_SOURCE는 seed, firestore 또는 demo여야 합니다.")
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
+        if campus_source != "demo":
+            from core.seed_loader import load_campus
+            await run_in_threadpool(load_campus)
         if selected_storage == "memory":
             if application.state.meetup_repo is None:
                 application.state.meetup_repo = get_repo()
-            seed_memory(application.state.meetup_repo)
+            seed_memory(application.state.meetup_repo, campus_source=campus_source)
         if campus_source == "demo":
             logging.getLogger(__name__).warning("CAMPUS_SOURCE=demo: 가상 301~304호만 사용하는 모임 API 시연입니다.")
         yield
@@ -86,6 +90,9 @@ def create_app(*, repo: MeetupRepo | None = None, campus: Campus | None = None) 
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(Exception, unexpected_error_handler)
     application.include_router(meetups_router)
+    if campus_source != "demo":
+        from core.routes_rooms import router as rooms_router
+        application.include_router(rooms_router)
 
     @application.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:

@@ -25,9 +25,11 @@ from meetup_time import KST
 def main() -> int:
     parser = argparse.ArgumentParser(description="Firestore 실접속·모임 생성/참여·재시작 영속성 검사")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--base-url", help="배포 서버 URL. 지정하면 로컬 서버 시작/재시작을 생략합니다.")
     args = parser.parse_args()
-    if os.environ.get("STORAGE") != "firestore" or os.environ.get("CAMPUS_SOURCE") != "demo":
-        print("먼저 STORAGE=firestore, CAMPUS_SOURCE=demo를 설정하세요.")
+    source = os.environ.get("CAMPUS_SOURCE")
+    if os.environ.get("STORAGE") != "firestore" or source not in ("demo", "seed"):
+        print("먼저 STORAGE=firestore, CAMPUS_SOURCE=seed 또는 demo를 설정하세요.")
         return 1
     if not os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON"):
         print("인증 JSON 환경변수가 없습니다. 로더를 먼저 실행하세요.")
@@ -39,7 +41,7 @@ def main() -> int:
     stage = "local_port"
     succeeded = False
     cleaned = True
-    base = f"http://127.0.0.1:{args.port}"
+    base = args.base_url.rstrip("/") if args.base_url else f"http://127.0.0.1:{args.port}"
 
     def request(path, body=None):
         raw = None if body is None else json.dumps(body).encode("utf-8")
@@ -67,7 +69,7 @@ def main() -> int:
                 try:
                     status, body, headers = request("/api/health")
                     assert status == 200 and body["storage"] == "firestore"
-                    assert headers["X-Campus-Source"] == "demo"
+                    assert headers["X-Campus-Source"] == source
                     return process
                 except URLError:
                     time.sleep(0.1)
@@ -79,8 +81,9 @@ def main() -> int:
 
     try:
         # 이미 사용 중인 서버에 요청하지 않도록 시작 전 포트를 확인한다.
-        with socket.socket() as probe:
-            probe.bind(("127.0.0.1", args.port))
+        if not args.base_url:
+            with socket.socket() as probe:
+                probe.bind(("127.0.0.1", args.port))
 
         stage = "firestore_read"
         client = get_client()
@@ -89,7 +92,12 @@ def main() -> int:
         print("PASS: 실제 Firestore 읽기", flush=True)
 
         stage = "server_start"
-        server = start_server()
+        if not args.base_url:
+            server = start_server()
+        if source == "seed":
+            status, rooms, _ = request("/api/rooms?at=2026-11-10T14%3A10%3A00%2B09%3A00")
+            assert status == 200 and len(rooms["rooms"]) == 26
+            print("PASS: 실제 시간표 시드 26개 / 강의실 API", flush=True)
         next_day = datetime.now(KST).date() + timedelta(days=1)
         start = datetime.combine(next_day, day_time(21), KST)
         stage = "create"
@@ -101,6 +109,9 @@ def main() -> int:
         })
         assert status == 201 and body["meetup"]["memberCount"] == 1
         meetup_id = body["meetup"]["id"]
+        status, listed, _ = request("/api/meetups?roomId=eng-304")
+        assert status == 200 and any(item["id"] == meetup_id for item in listed["meetups"])
+        print("PASS: 별도 HTTP 요청에서 생성된 모임 조회", flush=True)
         reference = collection.document(meetup_id)
         saved = reference.get(timeout=10, retry=None).to_dict()
         assert saved["hostId"] == marker and isinstance(saved["startAt"], datetime)
@@ -113,14 +124,19 @@ def main() -> int:
         assert len(reference.get(timeout=10, retry=None).to_dict()["members"]) == 2
         print("PASS: 참여 200 / Firestore 인원 1 → 2", flush=True)
 
-        stage = "restart"
-        server.terminate()
-        server.wait(timeout=5)
-        server = None
-        server = start_server()
+        stage = "duplicate_join"
+        status, duplicate, _ = request(f"/api/meetups/{meetup_id}/join", {"userId": marker + "-guest", "nickname": "검증참가자"})
+        assert status == 200 and duplicate["meetup"]["memberCount"] == 2
+        print("PASS: 동일 참가자 중복 참여 시 인원 유지", flush=True)
+        stage = "restart" if not args.base_url else "read_back"
+        if server is not None:
+            server.terminate()
+            server.wait(timeout=5)
+            server = None
+            server = start_server()
         status, persisted, _ = request(f"/api/meetups/{meetup_id}")
         assert status == 200 and persisted == joined
-        print("PASS: 서버 재시작 후 모임·참여 인원 유지", flush=True)
+        print("PASS: " + ("배포 서버 재조회" if args.base_url else "서버 재시작") + " 후 모임·참여 인원 유지", flush=True)
         succeeded = True
     except Exception as exc:
         # JSON, 키, SDK 인증 예외 원문, 프로젝트 식별자는 출력하지 않는다.

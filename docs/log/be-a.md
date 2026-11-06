@@ -59,3 +59,9 @@
 - 남은 문제: B의 core/availability.py는 원격에 아직 없어 CAMPUS_SOURCE=core 전환은 하지 않음. 실제 시간표/지도/프론트·두 기기·Render 배포는 별도 통합 단계. Firestore 검증용 모임은 정리했으며 운영 데모 모임을 초기화하거나 메모리 기록을 이관하지 않음.
 
 실제 검증은 기존 모임과 섞이지 않도록 다음 날 eng-304 21:00–21:30에 생성한 임시 모임으로 수행했다. 데이터 정리는 해당 실행이 만든 기록에만 한정하며 전체 meetups 초기화 스크립트는 실행하지 않았다. 실제 검증 중 키가 들어 있는 원본 파일 내용은 도구 출력·채팅·Git·로그에 남기지 않았다. 새 패키지 설치 없음. 변경은 be-a 로컬 커밋이며 push·main 병합·배포는 하지 않음.
+
+## 21:30 공유 접속 통합과 배포 준비
+- 바뀐 것: origin/fe 1c967af와 origin/be-b a52e6e2를 be-a에 병합. 승인된 scope-change에 따라 canonical 정보대 26개 시드를 backend/seed/campus.json에 그대로 반영. main.py에 B 강의실 라우터·시작 로딩 등록, CAMPUS_SOURCE=seed 기본값 정렬. memory 데모도 11/10 eng-316으로 정렬. Render 무료·Firestore·seed 설정과 실제 DB 검증 스크립트/실행 안내 갱신.
+- API 영향: 계약 변경 없음. 강의실/건물 GET과 모임 생성·참여가 동일 Firestore 모임을 조회. 채팅/LLM 라우터는 추가하지 않음.
+- 확인 방법: unittest 32개 통과, frontend npm ci와 production build 통과. 실제 Firestore에서 26개 방·별도 요청 목록 조회·생성201·서로 다른 userId 참여200(1→2)·중복 참여·서버 재시작 유지 검증. 해당 검증 모임만 정리.
+- 남은 문제: 공개 URL 배포 검증 진행 중. 닉네임 기반 MVP로 계정 인증 없음. 다중 worker 간 모임 생성 충돌 직렬화는 미구현이므로 worker 1 유지. 새 패키지는 추가하지 않았으며 기존 frontend lockfile로 설치함.
