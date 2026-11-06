@@ -22,3 +22,7 @@
 ## 검증
 
 37개 backend unittest, frontend production build와 ESLint 통과. 테스트는 수업/현재·향후 모임/120분/층 조건, 결과 없음, 범위 밖 질문, 시설·거리 불확실성, OpenAI 장애와 필수 필드를 검증한다. 실제 OpenAI 호출과 공개 화면 검증 결과는 docs/log/be-a.md에 별도 기록한다.
+
+## 공개 시연 확인 완료
+
+2026-11-06 실제 Render 배포에서 OpenAI 의도 해석과 추천 카드→강의실 이동을 확인했다. 환경변수 이름은 반드시 `OPENAI_API_KEY`이며 `OPEN_API_KEY`는 읽지 않는다. 키는 Render에만 저장한다. 시연 링크: https://bingang-web.onrender.com/?at=2026-11-10T14%3A10%3A00%2B09%3A00
