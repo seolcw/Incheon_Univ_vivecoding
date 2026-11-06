@@ -102,7 +102,11 @@ export function FreeTimeSlider({ value, onChange }: { value: number; onChange: (
           <div className="absolute inset-x-0 top-1/2 h-3 -translate-y-1/2 overflow-hidden rounded-full bg-muted">
             <div className="free-slider-fill absolute inset-0 bg-foreground" />
           </div>
-          <div ref={rail} className="absolute inset-y-0" style={{ left: THUMB_RADIUS, right: THUMB_RADIUS }}>
+          <div
+            ref={rail}
+            className="absolute inset-y-0 [container-type:inline-size]"
+            style={{ left: THUMB_RADIUS, right: THUMB_RADIUS }}
+          >
             {OPTIONS.map((option, optionIndex) => (
               <span
                 key={option.value}
@@ -113,7 +117,7 @@ export function FreeTimeSlider({ value, onChange }: { value: number; onChange: (
                 style={{ left: `${(optionIndex / LAST) * 100}%` }}
               />
             ))}
-            <div className="free-slider-rail pointer-events-none absolute inset-y-0 left-0 w-full">
+            <div className="free-slider-rail pointer-events-none absolute inset-y-0 left-0 w-0">
               <span
                 role="slider"
                 tabIndex={0}

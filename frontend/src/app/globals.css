@@ -303,7 +303,7 @@
     transform: translateY(-7%);
   }
 }
-@keyframes ping {
+@keyframes room-ping {
   0% {
     opacity: 0.8;
     transform: scale(1);
@@ -569,6 +569,12 @@
   transform: translate(-50%, -50%);
   user-select: none;
 }
+/* 폰은 도면을 옆으로 밀어 보므로 숫자가 잘린다. */
+@media (max-width: 47.99rem) {
+  .plan-ghost {
+    display: none;
+  }
+}
 .plan-cell {
   position: absolute;
   padding: 0.17cqw;
@@ -690,7 +696,7 @@
   border: 2px solid var(--cell);
   border-radius: clamp(4px, 0.75cqw, 10px);
   pointer-events: none;
-  animation: ping 2.4s ease-out infinite;
+  animation: room-ping 2.4s ease-out infinite;
   animation-delay: calc(var(--lamp, 0ms) + 500ms);
 }
 /* 사람이 있는 방은 안쪽 빛이 천천히 숨쉰다 */
@@ -760,8 +766,9 @@
   transform-origin: left;
   transition: transform 0.5s var(--ease-settle);
 }
+/* 폭 0인 받침만 옮긴다. 레일 폭은 컨테이너 단위로 읽어 페이지 폭을 늘리지 않는다. */
 .free-slider-rail {
-  transform: translateX(calc(var(--p) * 100%));
+  transform: translateX(calc(var(--p) * 100cqw));
   transition: transform 0.5s var(--ease-settle);
 }
 .free-slider-thumb {
