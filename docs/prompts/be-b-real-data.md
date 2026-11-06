@@ -41,3 +41,7 @@
 ## 도구
 
 Codex 코드 편집·로컬 Python unittest·FastAPI TestClient·Firebase Admin SDK의 읽기 전용 조회·GitHub 읽기(이슈/계약)·Presentations/PDF 스킬. 서버 환경 변수에만 자격증명을 전달했고 코드·이슈·로그에는 저장하지 않았다.
+
+## 후속 정리·통합 인계
+
+사용자 요청으로 발표 파일·생성 스크립트·임시 산출물을 삭제했다. 위 발표 관련 내용은 생성 당시의 이력이다. 추가 요청에 따라 구버전 오류 모듈 core/api_support.py와 구버전 안내 docs/course_search_api_implementation.md도 삭제하고, 기존 backend/core/README.md에 통합 설명을 모았다. main.py·requirements.txt·.env.example을 저장하며 main은 계약의 errors.ApiError로 연결했다. 이를 위해 backend/errors.py에 공통 예외를 정의했다. A의 모임 repo·CRUD 구현 및 실제 통합 시연은 여전히 별도 완료 확인이 필요하다.
