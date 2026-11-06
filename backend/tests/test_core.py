@@ -13,16 +13,11 @@ from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 
 from backend import db
+from backend.errors import ApiError
 from backend.core import routes_chat, routes_rooms, seed_loader
 from backend.core.availability import check_meetup_slot, parse_at, room_status, today_schedule
 from backend.core.firestore_loader import normalize_classrooms
 from backend.core.meetup_reader import list_open_meetups
-
-
-class FakeApiError(Exception):
-    """The documented A interface, for isolated B tests only."""
-    def __init__(self, code, status, message):
-        self.code, self.status, self.message = code, status, message
 
 
 def make_meetup(room_id="row_303", start="15:00", end="17:00", status="open", meetup_id="demo-m1"):
@@ -59,14 +54,12 @@ class CoreTests(unittest.TestCase):
         self.addCleanup(data_patch.stop)
         self.repo = ModuleType("backend.meetup_repo")
         self.repo.list_open = Mock(return_value=[])
-        errors = ModuleType("backend.errors")
-        errors.ApiError = FakeApiError
-        modules_patch = patch.dict(sys.modules, {"backend.meetup_repo": self.repo, "backend.errors": errors})
+        modules_patch = patch.dict(sys.modules, {"backend.meetup_repo": self.repo})
         modules_patch.start()
         self.addCleanup(modules_patch.stop)
         self.app = FastAPI()
 
-        @self.app.exception_handler(FakeApiError)
+        @self.app.exception_handler(ApiError)
         def api_error(request, error):
             return JSONResponse(status_code=error.status, content={"error": {
                 "code": error.code, "message": error.message}})
@@ -211,6 +204,34 @@ class CoreTests(unittest.TestCase):
     def test_memory_client_needs_no_credentials(self):
         with patch.dict(os.environ, {"STORAGE": "memory", "FIREBASE_SERVICE_ACCOUNT_JSON": "not-json"}, clear=True):
             self.assertIsNone(db.get_client())
+
+    def test_main_app_routes_errors_and_post_cors(self):
+        from backend.main import app
+
+        with TestClient(app) as client:
+            self.assertEqual(client.get("/api/health").status_code, 200)
+            response = client.get("/api/rooms", params={"buildingId": "8", "floor": 3,
+                                  "status": "empty", "minFreeMinutes": 60,
+                                  "at": "2026-11-06T15:10:00+09:00"})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual([r["id"] for r in response.json()["rooms"]],
+                             ["row_301", "row_303", "row_304"])
+            for url, params, status, code in (
+                ("/api/rooms/missing", {}, 404, "NOT_FOUND"),
+                ("/api/rooms", {"at": "invalid"}, 400, "VALIDATION_ERROR"),
+                ("/api/rooms", {"floor": "third"}, 400, "VALIDATION_ERROR"),
+                ("/api/missing", {}, 404, "NOT_FOUND"),
+            ):
+                result = client.get(url, params=params)
+                self.assertEqual(result.status_code, status)
+                self.assertEqual(result.json()["error"]["code"], code)
+            preflight = client.options("/api/chat", headers={
+                "Origin": "http://localhost:3000", "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            })
+            self.assertEqual(preflight.status_code, 200)
+            self.assertEqual(preflight.headers["access-control-allow-origin"], "http://localhost:3000")
+            self.assertEqual(client.post("/api/chat").status_code, 200)  # Contract stub only.
 
     def test_normalize_real_schema(self):
         documents = fixture_documents()

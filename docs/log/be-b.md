@@ -15,3 +15,9 @@
 - API 영향: /api/buildings·/api/rooms·/api/rooms/{roomId} 경로·필드·타입 유지. buildingId는 실제 건물 번호 문자열, roomId는 대표 Firestore 문서 ID. default source는 firestore(STORAGE=memory는 명시적 데모 모드); CAMPUS_SOURCE로 지정 가능. 로딩은 프로세스당 1회, A 시작 시 load_campus 호출 권장. A errors.ApiError·repo 계약 필요. /chat은 기존 스텁만 유지. docs/SPEC.md·contracts/·A 공통 파일은 이번 작업에서 수정하지 않음.
 - 확인 방법: unittest 16개 통과. 실제 Firestore 2,834행→375공간 중 29개 제외→346공간·20건물. 인문대학 buildingId=15, 금15:10, empty,60분 필터 22개와 상세·건물합계 확인(live_verification.json). 실제 meetups가 빈 컬렉션임을 확인하고 B 라우터 실조회에서는 빈 목록을 주입했으므로 A 통합검증과 구분. 발표 PPTX 구조·레이아웃·재import 검사 통과, PDF 6장 개별 렌더 확인(한글·잘림 없음).
 - 남은 문제: 실제 데이터 전환의 SPEC 반영은 사람 담당. A repo·모임 라우터 미공유로 409 연동·생성/참여·두 기기·배포/CORS 미검증. 기존 eng-* 데모 모임은 실데이터 ID로 A/FE가 조정해야 함. 키의 실제 A 전달과 발표 리허설·최종 제출은 미완료. 발표는 통합 대기 표시가 있는 초안. 이전 승인으로 만든 미추적 main.py·requirements.txt·.env.example·api_support.py는 이번 커밋 제외. 테스트의 기존 Starlette deprecation 경고는 통과에 영향 없음.
+
+## 12:30 서버 통합 구성·인계 문서 정리
+- 바뀐 것: 사용자 지시로 구버전 api_support.py와 docs/course_search_api_implementation.md 삭제. main.py·errors.py·requirements.txt·.env.example을 저장하고 공통 ApiError로 연결. 기존 README·SPEC·계약·작업 기록·프롬프트 문서를 확인하여 backend/core/README.md에 병합 순서, A 저장소 인터페이스, 환경 변수, FE 연결 조건을 통합. 발표 및 임시 산출물 삭제 반영. 추가 패키지 설치 없음.
+- API 영향: 조회 경로·응답 형식 유지, /api/chat 계약 스텁 등록(AI 미구현), 공통 400/404/500 오류 처리와 POST CORS 연결. 모임 저장소·CRUD 구현은 포함하지 않음.
+- 확인 방법: .venv\Scripts\python -m unittest backend.tests.test_core -v 총 17개 통과. 별도 uvicorn 프로세스 memory 모드 기동 후 /api/health 200 확인 및 종료. git diff --check 통과. 실제 DB 검증은 앞선 결과를 유지하며 이번 작업에서 재조회하지 않음.
+- 남은 문제: A meetup_repo·모임 라우터 통합 전에는 강의실 조회가 INTERNAL_ERROR를 반환하므로 README의 통합 절차 필요. 실제 모임 생성 409·참여·두 기기·배포 검증은 A 통합 후 진행. 기존 Starlette 테스트 deprecation 경고는 통과에 영향 없음.

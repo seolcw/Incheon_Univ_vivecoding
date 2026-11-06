@@ -3,6 +3,8 @@
 
 사용자가 2026-11-06에 실제 Firestore 사용을 선택했다. `classrooms.slots`는 **수업 시간**이다. 이번 구현은 SPEC v1의 가상 36개 강의실 및 10/6/3 집계와 혼합하지 않는다. `docs/SPEC.md`·`contracts/api.md`는 수정하지 않았다. 실제 데이터 전환 사항은 사람이 기준 문서에 반영해야 한다.
 
+이 문서는 현재 브랜치의 API·데이터·서버 통합 인계 문서다. 기존 README, SPEC, 계약, 작업 로그, 프롬프트 기록을 확인해 여기에 연결 내용을 모았다. 구버전 `docs/course_search_api_implementation.md`는 삭제했다. `docs/prompts/pro-spec-v1.md`는 v1 작성 **요청문**이며 확정된 v1 원문이 아니다. 작업 이력은 `docs/log/be-b.md`, 사용자의 결정과 검증 근거는 `docs/prompts/be-b-real-data.md`에 남긴다.
+
 ## 데이터 기준
 
 - Firestore `classrooms`: `buildingNo`, `buildingName`, `roomNo`, `day`, `slots[{start,end}]`. 같은 건물·호수의 수업을 하나로 모은다. 중복·중첩 수업 구간은 합친다.
@@ -59,7 +61,21 @@ Vite React는 환경 변수 접근을 `import.meta.env.VITE_API_URL`로 바꾼�
 
 ## be-a 연결
 
-필요한 A 인터페이스는 `errors.ApiError(code, status, message)` 및 `meetup_repo.list_open(room_id=None)`다. repo는 모든 open 모임을 camelCase·ISO 문자열·문서 ID로 반환한다. B는 A의 repo로 위임하며 별도 저장소나 모임 CRUD를 구현하지 않는다. A 모듈이 없을 때 빈 목록으로 숨기지 않는다.
+이번 사용자 요청으로 `main.py`, `requirements.txt`, `.env.example`을 통합용으로 함께 저장한다. 삭제한 `core/api_support.py` 대신 계약의 `errors.ApiError(code, status, message)`를 `backend/errors.py`에 정의했다. A 쪽에도 동일 파일이 있으면 아래 연결을 기존 구현에 병합하고 중복 클래스를 만들지 않는다.
+
+현재 main.py는 `/api/health`, 세 강의실 조회 API, `/api/chat` 계약 스텁을 등록한다. 422는 400 VALIDATION_ERROR, ApiError는 지정된 상태·코드, 없는 경로는 404 NOT_FOUND, 예상하지 못한 예외는 500 INTERNAL_ERROR로 응답한다. CORS는 지정 Origin의 GET·POST·OPTIONS와 Content-Type을 허용한다. 채팅 응답은 고정 예시이며 AI 호출이 아니다.
+
+**아직 필요한 A 구현은 `meetup_repo.list_open(room_id=None)`와 모임 CRUD 라우터다. 현재 브랜치만으로 health·문서·채팅 스텁은 실행되지만, A repo가 없으면 강의실 조회는 INTERNAL_ERROR가 된다.** 오류를 빈 목록으로 숨기거나 임시 저장소를 중복 구현하지 않는다. 테스트의 대체 repo는 production 구현이 아니다.
+
+repo는 과거·현재·예정에 관계없이 모든 open 모임을 camelCase·ISO 문자열·문서 ID로 반환한다. room_id가 있으면 해당 방만 반환하며 취소 모임은 제외한다. roomName·buildingName·floor·memberCount·isFull 같은 파생값은 B가 계산한다.
+
+```python
+# backend/meetup_repo.py에서 A가 제공할 인터페이스
+def list_open(room_id: str | None = None) -> list[dict]:
+    ...  # 실제 memory 또는 Firestore repo에 위임
+```
+
+반환 항목에는 `id`, `roomId`, `title`, `category`, `description`, `startAt`, `endAt`, `maxMembers`, `hostId`, `hostNickname`, `members`, `status`, `createdAt`이 필요하다. members 원소는 `userId`, `nickname`, `joinedAt`이다. 시각은 Timestamp 객체 대신 ISO 문자열로 반환한다.
 
 ```python
 from core.routes_rooms import router as rooms_router
@@ -67,11 +83,12 @@ from core.routes_chat import router as chat_router
 from core.seed_loader import load_campus
 from core.availability import check_meetup_slot
 
-# main.py에서 A가 등록
+# 현재 main.py에 이미 등록되어 있음. A의 main.py와 병합할 때 한 번씩만 유지.
 app.include_router(rooms_router)  # 경로에 /api가 이미 있음; prefix 추가 금지
 app.include_router(chat_router)  # 고정 응답 스텁, AI 완성 아님
 
-# 서버 시작 시 한 번 호출 권장. async lifespan에서는 run_in_threadpool 사용.
+# 현재는 첫 조회 시 로드. 시작 시 미리 읽으려면 A의 lifespan에 연결.
+# async lifespan에서는 await run_in_threadpool(load_campus)를 사용.
 load_campus()
 ```
 
@@ -81,27 +98,49 @@ load_campus()
 
 실데이터 모임 시연은 `/api/rooms`에서 받은 실제 roomId로 진행해야 한다. `eng-301`, `eng-303`, 기존 demo-m1 시드는 이번 실제 데이터와 맞지 않는다. A의 시드·FE의 선택 ID를 함께 조정해야 한다.
 
+### 병합 순서와 확인 사항
+
+1. B의 `db.py`, `core/`, 테스트 변경을 반영한다. A의 기존 `main.py`·`errors.py`·requirements가 있으면 통째로 덮어쓰지 않고 필요한 import·핸들러·버전을 합친다.
+2. `errors.ApiError`를 서버와 모든 라우터가 같은 모듈 경로로 import하도록 한다. `uvicorn main:app --app-dir backend` 실행에서는 `errors`/`core`, 패키지 방식에서는 `backend.errors`/`backend.core`를 사용하며 두 방식을 한 프로세스에서 섞지 않는다.
+3. A의 repo.list_open을 연결하고 모임 라우터를 한 번 등록한다. B 라우터에는 이미 `/api`가 있으므로 추가 prefix를 붙이지 않는다. 기존 A의 app lifespan·repo 초기화는 보존한다.
+4. 모임 생성은 A가 입력·방 존재·운영 시간·기간을 검증한 뒤 같은 방의 모든 open 모임을 B의 check_meetup_slot에 전달한다. 사유가 있으면 `raise ApiError("ROOM_OCCUPIED", 409, reason)`로 반환한다.
+5. 실제 데이터에서는 FE의 건물·호수 선택 목록을 API로 로드한다. `row_*` roomId, 정원·좌표 미등록 값, 지하 층을 처리한다. 시연 모임 ID와 실제 roomId의 연결을 확인한다.
+6. 통합 서버에서 아래 검증을 한 번 수행한다. health 200은 repo/Firestore 준비 완료를 뜻하지 않는다.
+
+| 검증 | 기대 |
+| --- | --- |
+| `/api/rooms?buildingId=15&status=empty&minFreeMinutes=60&at=2026-11-06T15%3A10%3A00%2B09%3A00` | 실제 DB 기반 200. 저장된 검증 당시 결과는 22개이며 수업·모임 데이터 변경 시 달라질 수 있음 |
+| 위 응답의 roomId로 상세 조회 | todaySchedule·현재/예정 모임·상태 일치 |
+| 없는 방 / 잘못된 floor 또는 at | 404 NOT_FOUND / 400 VALIDATION_ERROR, 공통 error 객체 |
+| FE Origin으로 GET·POST preflight | CORS 허용 Origin·메서드·Content-Type 확인 |
+| 수업 또는 두 번째 open 모임과 1분 겹치게 생성 | 실제 모임 라우터가 409 ROOM_OCCUPIED 반환 |
+| 노트북 생성→폰 참여 | 201→200, 1/4→2/4, 다른 기기 10초 폴링 갱신 |
+
 ## 환경·의존성·실행
 
 실제 조회: `STORAGE=firestore`, `CAMPUS_SOURCE=firestore`, `FIREBASE_SERVICE_ACCOUNT_JSON`.
+
+`.env.example`은 변수 이름 목록이며 자동으로 로드되지 않는다. PowerShell 또는 배포 환경에 값을 설정한다. `CORS_ORIGINS`에는 `http://localhost:3000`과 실제 Vercel Origin을 쉼표로 연결한다(경로·끝 `/` 없음). 프론트 `NEXT_PUBLIC_API_URL`은 백엔드 Origin이며 변경하면 프론트를 다시 빌드한다. 프론트 변수는 이 서버의 .env.example에 넣지 않는다.
 
 `CAMPUS_SOURCE` 미지정 시 STORAGE=memory는 기존 로컬 seed, 그 외에는 firestore다. 실제 시간표를 사용하면서 memory 모임 저장소를 쓰는 혼합 모드는 지원하지 않는다. 데모 seed는 이전 v0 자료이며 이번 실데이터 검증 및 v1 집계와 별개다.
 
 키를 환경 변수로 읽는 PowerShell 예(실제 키 파일은 저장소 밖에서 A에게 안전한 경로로 전달):
 
 ```powershell
+.\.venv\Scripts\python -m pip install -r backend\requirements.txt
 $env:FIREBASE_SERVICE_ACCOUNT_JSON = Get-Content -LiteralPath 'C:\실제경로\서비스계정.json' -Raw -Encoding utf8
 $env:STORAGE = 'firestore'
 $env:CAMPUS_SOURCE = 'firestore'
-# A의 main.py·errors.py·meetup_repo.py가 통합된 후 실행
+$env:CORS_ORIGINS = 'http://localhost:3000'
+# A의 meetup_repo.py와 모임 라우터가 통합된 후 전체 기능 검증
 .\.venv\Scripts\python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8000
 ```
 
-로컬 검증 버전: Python 3.12.13, fastapi 0.162.0, pydantic 2.14.3, firebase-admin 7.7.0, httpx 0.28.1(테스트), uvicorn 0.34.0(앞선 작업에서 설치). 이번 B 작업의 추가 설치는 없다. requirements.txt·CORS·라우터 등록은 A가 반영한다. FastAPI Query 모델을 사용하므로 구버전으로 내릴 때 호환성을 확인해야 한다.
+로컬 검증 버전: Python 3.12.13, fastapi 0.162.0, pydantic 2.14.3, firebase-admin 7.7.0, httpx 0.28.1(테스트), uvicorn 0.34.0. requirements.txt에는 이 버전을 고정했다. 추가 설치는 없다. FastAPI Query 모델을 사용하므로 구버전으로 내릴 때 호환성을 확인해야 한다. Render의 Root Directory는 `backend`, Build는 `pip install -r requirements.txt`, Start는 `uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1`이다. 배포·모임 repo 운영 책임은 A에게 있다.
 
 ## 확인된 범위와 통합 대기
 
-- `.venv\Scripts\python -m unittest backend.tests.test_core -v`: 16개 통과. 시간 경계·겹침·취소·필터·정렬·404/400·실제 스키마 변환·repo 호출 계약 확인. A 인터페이스는 테스트에서 명시적으로 대체했다.
+- 기존 핵심 테스트 16개에 실제 main 앱의 라우터·공통 오류·POST CORS 연결 확인을 추가하여 총 17개가 통과했다. 실행: `.venv\Scripts\python -m unittest backend.tests.test_core -v`. 공통 오류는 실제 errors.ApiError를 사용하며 A repo는 테스트에서 명시적으로 대체한다. 별도 uvicorn 프로세스를 memory 모드로 기동해 /api/health 200을 확인한 후 종료했다.
 - 실제 Firestore를 읽어 B의 세 조회 라우터를 TestClient로 확인. 실제 `meetups` 컬렉션이 비어 있음을 확인한 뒤 조회 테스트에 빈 목록을 주입했다. production A repo 연동 확인을 뜻하지 않는다.
 - A의 모임 라우터가 아직 로컬·공유 be-a 브랜치에 없어 POST 409, 생성·참여, 두 기기 10초 갱신, 배포 CORS는 미확인이다.
-- 이전 요청의 예외 승인으로 만든 미추적 main.py·requirements.txt·.env.example·api_support.py는 이번 B 커밋에 포함하지 않는다. 실제 통합은 A 소유 파일을 사용한다.
+- 이번 후속 요청으로 main.py·errors.py·requirements.txt·.env.example을 커밋에 포함한다. 삭제한 api_support.py를 참조하지 않는다. A가 기존 공통 파일을 보유한 경우 위 병합 순서대로 결합한다. 발표 파일·생성 스크립트·임시 산출물은 사용자 요청으로 삭제했으며 이 인계에 포함되지 않는다.
