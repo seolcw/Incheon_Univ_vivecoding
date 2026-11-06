@@ -22,7 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <DemoAtGate>{children}</DemoAtGate>
           </main>
           <footer className="mx-auto w-full max-w-5xl px-4 pb-6 text-sm text-muted-foreground">
-            시간표와 데모 모임은 가상 시연 데이터예요.
+            실제 시간표 기준이에요. 휴강·보강은 반영되지 않고, 시간표에 없는 시간이라고 문이 열려 있다는 뜻은 아니에요.
           </footer>
           <NicknameDialog />
           <Suspense fallback={null}>

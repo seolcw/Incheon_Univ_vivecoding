@@ -1,5 +1,6 @@
 // NEXT_PUBLIC_USE_MOCK=1일 때 조회만 대신하는 가짜 서버. 쓰기는 lib/api.ts에서 막는다(SPEC v1 §4).
-// 시드는 정보대 1개 건물(mocks/campus.ts, docs/scope-change.md)이고, 상태 계산은 SPEC v1 §3 규칙을 따른다.
+// campus.json은 docs/reference/campus-info.json 사본(정보대 실제 시간표 26개 방)이고, 상태 계산은 SPEC v1 §3 규칙을 따른다.
+// 시연 시각 2026-11-10(화) 14:10 집계: 13/26, 층별 4/6·0/2·5/6·1/6·3/6, 모임 1개(docs/scope-change.md).
 
 import { ApiError } from "@/lib/api";
 import { KST_OFFSET_MS, toKstMinuteIso } from "@/lib/time";
@@ -12,9 +13,13 @@ import type {
   RoomStatus,
   RoomsResponse,
 } from "@/lib/types";
-import { seedBuildings, seedRooms, type SeedRoom } from "./campus";
+import campus from "./campus.json";
+
+const seedBuildings = campus.buildings;
+const seedRooms = campus.rooms;
 
 type SeedBuilding = (typeof seedBuildings)[number];
+type SeedRoom = (typeof seedRooms)[number];
 
 const LATENCY_MS = 150;
 const OPEN = "09:00";
@@ -22,24 +27,24 @@ const CLOSE = "22:00";
 
 const demoMeetup: Meetup = {
   id: "demo-m1",
-  roomId: "eng-303",
-  roomName: "303호",
+  roomId: "eng-316",
+  roomName: "316호",
   buildingId: "eng",
   buildingName: "정보대",
   floor: 3,
   title: "카공 모여라",
   category: "study",
   description: "조용히 각자 공부해요. 콘센트 자리 있음",
-  startAt: "2026-11-06T15:00:00+09:00",
-  endAt: "2026-11-06T17:00:00+09:00",
+  startAt: "2026-11-10T14:00:00+09:00",
+  endAt: "2026-11-10T16:00:00+09:00",
   maxMembers: 4,
   hostId: "u-demo-host",
   hostNickname: "민지",
-  members: [{ userId: "u-demo-host", nickname: "민지", joinedAt: "2026-11-06T14:58:00+09:00" }],
+  members: [{ userId: "u-demo-host", nickname: "민지", joinedAt: "2026-11-10T13:58:00+09:00" }],
   memberCount: 1,
   isFull: false,
   status: "open",
-  createdAt: "2026-11-06T14:58:00+09:00",
+  createdAt: "2026-11-10T13:58:00+09:00",
 };
 
 function notFound(message: string): never {

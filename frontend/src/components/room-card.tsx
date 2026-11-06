@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { describeRoom, ROOM_STATUS_META } from "@/lib/room-status";
+import { describeRoom, roomFacts, ROOM_STATUS_META } from "@/lib/room-status";
 import type { RoomStatus } from "@/lib/types";
 
 export function RoomCard({ room }: { room: RoomStatus }) {
@@ -16,9 +16,7 @@ export function RoomCard({ room }: { room: RoomStatus }) {
         <Badge className={meta.badgeClass}>{meta.label}</Badge>
       </span>
       <span className="text-sm">{describeRoom(room)}</span>
-      <span className="text-sm text-muted-foreground">
-        {room.capacity}명{room.tags.length > 0 && ` · ${room.tags.join(" · ")}`}
-      </span>
+      {roomFacts(room) && <span className="text-sm text-muted-foreground">{roomFacts(room)}</span>}
     </Link>
   );
 }

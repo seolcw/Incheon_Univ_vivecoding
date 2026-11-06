@@ -8,7 +8,7 @@ import { RoomTimeline } from "@/components/room-timeline";
 import { ErrorState, LoadingState, NotFoundState, RefreshFailedNote } from "@/components/states";
 import { Badge } from "@/components/ui/badge";
 import { useRoom } from "@/lib/api";
-import { describeRoom, ROOM_STATUS_META } from "@/lib/room-status";
+import { describeRoom, roomFacts, ROOM_STATUS_META } from "@/lib/room-status";
 
 export function RoomScreen() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -36,9 +36,7 @@ export function RoomScreen() {
           <Badge className={meta.badgeClass}>{meta.label}</Badge>
         </h1>
         <p>{describeRoom(room)}</p>
-        <p className="text-sm text-muted-foreground">
-          {room.capacity}명{room.tags.length > 0 && ` · ${room.tags.join(" · ")}`}
-        </p>
+        {roomFacts(room) && <p className="text-sm text-muted-foreground">{roomFacts(room)}</p>}
         {error && <RefreshFailedNote />}
       </div>
 

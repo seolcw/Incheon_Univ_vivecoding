@@ -24,11 +24,11 @@ const OPEN_CLOCK = "09:00";
 const CLOSE_CLOCK = "22:00";
 const MIN_LENGTH = 15;
 const MAX_LENGTH = 240;
-const DEFAULT_LENGTH = 60;
+const DEFAULT_LENGTH = 120;
 
 const FIELD_LABEL_CLASS = "text-sm font-medium";
 
-/** 시작은 지금(수업 중이면 끝난 뒤), 끝은 비어 있는 동안에서 최대 길이까지 */
+/** 시작은 지금(수업 중이면 끝난 뒤), 끝은 2시간 뒤. 비어 있는 시간이 더 짧으면 거기까지 */
 function defaultSlot(room: RoomStatus | undefined, at: string) {
   const clock = formatKstTime(at);
   const closed = clock < OPEN_CLOCK || clock >= CLOSE_CLOCK;
@@ -36,8 +36,8 @@ function defaultSlot(room: RoomStatus | undefined, at: string) {
   if (room?.status === "class" && room.classEndsAt) start = formatKstTime(room.classEndsAt);
 
   const startMinutes = clockToMinutes(start);
-  const freeUntil = room?.freeUntil ? clockToMinutes(formatKstTime(room.freeUntil)) : startMinutes + DEFAULT_LENGTH;
-  const end = Math.min(freeUntil, startMinutes + MAX_LENGTH, clockToMinutes(CLOSE_CLOCK));
+  const freeUntil = room?.freeUntil ? clockToMinutes(formatKstTime(room.freeUntil)) : clockToMinutes(CLOSE_CLOCK);
+  const end = Math.min(freeUntil, startMinutes + DEFAULT_LENGTH, clockToMinutes(CLOSE_CLOCK));
   return { start, end: minutesToClock(end) };
 }
 

@@ -27,18 +27,23 @@ export const ROOM_STATUS_META: Record<RoomStatusValue, { label: string; badgeCla
 };
 
 const CLOSE_CLOCK = "22:00";
+const GENERIC_CLASS_TITLE = "수업";
 
 /** 카드와 상세에 쓰는 한 줄 설명 */
 export function describeRoom(room: RoomStatus): string {
   switch (room.status) {
     case "class":
-      return room.classEndsAt
-        ? `${room.currentTitle ?? "수업"} 수업 중, ${formatKstTime(room.classEndsAt)} 종료`
-        : "수업 중";
+      // 상태는 배지가 보여 준다. 실제 시간표에는 과목명이 없어 제목이 "수업"으로 오면 종료 시각만 쓴다.
+      return [
+        room.currentTitle !== GENERIC_CLASS_TITLE && room.currentTitle,
+        room.classEndsAt && `${formatKstTime(room.classEndsAt)} 종료`,
+      ]
+        .filter(Boolean)
+        .join(", ");
     case "closed":
       return "운영 시간이 아니에요";
     case "meetup": {
-      const title = `${room.currentTitle ?? "모임"} 모임 중`;
+      const title = room.currentTitle ?? "모임";
       if (!room.freeUntil || formatKstTime(room.freeUntil) === CLOSE_CLOCK) return `${title}, 남은 수업 없음`;
       return `${title}, ${formatKstTime(room.freeUntil)}부터 수업`;
     }
@@ -46,6 +51,11 @@ export function describeRoom(room: RoomStatus): string {
       if (!room.freeUntil || formatKstTime(room.freeUntil) === CLOSE_CLOCK) return "남은 수업 없음";
       return `${room.freeMinutes}분 비어있음 (${formatKstTime(room.freeUntil)}까지)`;
   }
+}
+
+/** 정원과 태그. 시드에 값이 없으면(정원 0, 태그 없음) 빈 문자열이다. */
+export function roomFacts(room: RoomStatus): string {
+  return [room.capacity > 0 ? `${room.capacity}명` : null, ...room.tags].filter(Boolean).join(" · ");
 }
 
 /** 도면 칸의 둘째 줄: 좁은 칸에 들어가는 짧은 글자 */
