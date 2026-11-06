@@ -2,6 +2,16 @@
 
 프론트 `origin/fe`(1c967af)와 B `origin/be-b`(a52e6e2)를 통합했다. 최신 `docs/scope-change.md`에 맞춰 정보대 강의실 26개를 시작할 때 로드하고, 모임은 Firestore에 저장한다. 채팅은 이번 범위에 없다.
 
+## 공개 주소 (2026-11-06 배포·검증)
+
+- 웹: https://bingang-web.onrender.com
+- 시연: https://bingang-web.onrender.com/?at=2026-11-10T14%3A10%3A00%2B09%3A00
+- API: https://bingang-api.onrender.com (Swagger: `/docs`)
+
+두 컴퓨터가 같은 웹 주소로 들어와 각자 닉네임을 정하면 한쪽이 만든 모임에 다른 쪽이 참여할 수 있다. 생성은 강의실 상세의 `모임 만들기`, 참여는 상단 `모임` 목록의 `참여하기`를 쓴다. Chrome 주최자와 독립된 인앱 브라우저 참가자로 실제 공개 URL에서 생성·참여 후 양쪽 2/4명 표시를 확인했다. 별도 물리 PC 두 대를 직접 조작한 검증은 아니다. UI 검증 모임은 확인 후 취소했다.
+
+프론트와 API 모두 Render 무료 인스턴스다. 이번 배포는 로그인된 Render 계정에서 두 서비스를 올렸으며 Vercel 배포는 만들지 않았다. 무료 서버는 한동안 사용하지 않으면 대기 상태가 되어 첫 접속에 50초 이상 걸릴 수 있다. 로컬 PC를 꺼도 배포 서비스는 독립적으로 작동한다. 공개 Git 저장소 방식으로 연결했으므로 이후 변경은 각 서비스의 `Manual Deploy → Deploy latest commit`으로 배포한다. GitHub push만으로 배포 완료라고 판단하지 않는다.
+
 ## 로컬 실행 (PowerShell)
 
 `backend/`에서 실행한다. 인증 JSON 원본은 저장소 밖에 둔다.

@@ -60,8 +60,14 @@
 
 실제 검증은 기존 모임과 섞이지 않도록 다음 날 eng-304 21:00–21:30에 생성한 임시 모임으로 수행했다. 데이터 정리는 해당 실행이 만든 기록에만 한정하며 전체 meetups 초기화 스크립트는 실행하지 않았다. 실제 검증 중 키가 들어 있는 원본 파일 내용은 도구 출력·채팅·Git·로그에 남기지 않았다. 새 패키지 설치 없음. 변경은 be-a 로컬 커밋이며 push·main 병합·배포는 하지 않음.
 
-## 21:30 공유 접속 통합과 배포 준비
+## 12:30 공유 접속 통합과 배포 준비
 - 바뀐 것: origin/fe 1c967af와 origin/be-b a52e6e2를 be-a에 병합. 승인된 scope-change에 따라 canonical 정보대 26개 시드를 backend/seed/campus.json에 그대로 반영. main.py에 B 강의실 라우터·시작 로딩 등록, CAMPUS_SOURCE=seed 기본값 정렬. memory 데모도 11/10 eng-316으로 정렬. Render 무료·Firestore·seed 설정과 실제 DB 검증 스크립트/실행 안내 갱신.
 - API 영향: 계약 변경 없음. 강의실/건물 GET과 모임 생성·참여가 동일 Firestore 모임을 조회. 채팅/LLM 라우터는 추가하지 않음.
 - 확인 방법: unittest 32개 통과, frontend npm ci와 production build 통과. 실제 Firestore에서 26개 방·별도 요청 목록 조회·생성201·서로 다른 userId 참여200(1→2)·중복 참여·서버 재시작 유지 검증. 해당 검증 모임만 정리.
 - 남은 문제: 공개 URL 배포 검증 진행 중. 닉네임 기반 MVP로 계정 인증 없음. 다중 worker 간 모임 생성 충돌 직렬화는 미구현이므로 worker 1 유지. 새 패키지는 추가하지 않았으며 기존 frontend lockfile로 설치함.
+
+## 12:36 공개 웹 배포와 두 사용자 검증 완료
+- 바뀐 것: be-a 60322fe push 완료. Render 무료 서비스 bingang-api와 bingang-web을 be-a에서 배포. 재현용 render.yaml에 프론트 서비스·브랜치·공개 API 환경변수를 추가하고 backend/README.md에 실제 주소와 사용법 기록. 인증키는 사용자가 Render 비밀 환경변수에 직접 입력했으며 Git/채팅에 포함하지 않음.
+- API 영향: 계약 변경 없음. 공개 프론트 https://bingang-web.onrender.com, 공개 API https://bingang-api.onrender.com. CORS는 해당 프론트와 localhost:3000 허용. Vercel 계정 연결 대신 기존 로그인 Render 계정의 무료 Node 서비스로 프론트 배포.
+- 확인 방법: Render 양쪽 Deploy succeeded(60322fe). 공개 API로 실제 Firestore 생성201·별도 userId 참여200·재조회·중복 참여·26개 강의실 확인, 검증 문서만 정리. 공개 Origin POST preflight200 확인. Chrome 주최자가 11/10 14:10–16:10 eng-302 모임 생성 → 독립 인앱 브라우저 닉네임 참가자가 목록에서 참여 → 양쪽 2/4명 자동 반영 확인. UI 검증 모임은 주최자 버튼으로 취소하고 빈 강의실 복귀 확인. 별도 물리 PC 두 대는 직접 검증하지 않음.
+- 남은 문제: 무료 인스턴스 유휴 후 첫 요청 지연. public Git 연결은 수동 배포가 필요함. 채팅과 계정 인증은 범위 밖. 검증 화면은 저장소 밖 로컬 시각화 폴더에 보관. 기존 로컬 demo 서버는 종료했으며 공개 서버는 유지.
