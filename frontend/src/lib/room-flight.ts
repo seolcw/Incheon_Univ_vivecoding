@@ -1,6 +1,7 @@
 // 도면이나 카드에서 강의실을 누르면 그 칸의 색이 커져 강의실 화면의 색면이 된다.
 // 도착 화면은 힌트로 호수와 상태를 먼저 그려서, 데이터를 기다리는 동안에도 끊기지 않는다.
 
+import type { MouseEvent } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { RoomStatus, RoomStatusValue } from "@/lib/types";
 
@@ -25,6 +26,14 @@ export function toRoomHint(room: RoomStatus): RoomHint {
 }
 
 const SAFETY_MS = 5000;
+
+/** 새 탭으로 여는 클릭은 그대로 두고, 같은 탭 이동일 때만 비행을 시작한다. */
+export function handleRoomLinkClick(event: MouseEvent, origin: HTMLElement, room: RoomStatus) {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return;
+  }
+  launchRoomFlight(origin, room);
+}
 
 let hint: RoomHint | null = null;
 let returningName: string | null = null;
