@@ -59,3 +59,9 @@
 - API 영향: 없음(계약 변경 없음).
 - 확인 방법: 백엔드 unittest 33개 중 32개 통과, 프론트 production build 통과. memory 저장소와 TestClient로 시연 장면(13/26, 302 140분, 311 수업 14:45, 313 50분, 316 demo-m1), 60분 필터, 생성 201, 모임·수업 겹침 409, 참여 2/4, 나가기, 취소, CORS 확인.
 - 남은 문제: be-b 새 테스트 1개가 `backend.main` import 실패 / 공개 웹은 `be-a` 브랜치 수동 배포라 새 프론트는 be-a 병합·재배포 후 반영 / 공개 DB 정리 필요 / 3D 지도 미포함 / 통합본을 공개 서버·실제 Firestore·브라우저·두 기기로는 미확인.
+
+## 13:18 3D 지도와 횃불ON main 통합
+- 바뀐 것: 3D 지도(fe 6163ea5)와 be-a 5c79995의 AI 챗봇 횃불ON을 main에 병합해 푸시(64eac9b). 새 라이브러리: three, @react-three/fiber, @types/three.
+- API 영향: `POST /api/chat`이 실제 구현으로 등록됨. 외부 계약 변경 없음(be-a 기록 기준). 프론트는 `location: null`을 보냄.
+- 확인 방법: 백엔드 unittest 38개 중 37개 통과, 프론트 production build·lint 통과. TestClient로 시연 장면, 생성 201, 모임·수업 겹침 409, 참여 2/4, 나가기, 취소, CORS, 키 없는 챗봇 fallback 추천 3개 확인. 목업 모드 브라우저에서 3D 지도·챗봇 버튼·닉네임 창 표시와 콘솔 오류 없음 확인. 지도→정보대→3층 이동과 3층 상태 색은 병합 전 fe 6163ea5에서 확인.
+- 남은 문제: be-b 새 테스트 1개 import 실패 / 공개 웹은 be-a 병합·재배포 후 반영 / 공개 DB 정리 필요 / 디자인 개편 미포함(claude/fe-design-revamp-892074에서 진행 중) / 통합본의 대화창 열기·실제 OpenAI는 이 통합에서 미확인, 공개 서버·두 기기도 미확인.
