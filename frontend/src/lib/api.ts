@@ -154,6 +154,11 @@ export function useDemoAt(): DemoAt {
   );
 }
 
+/** 화면 계산용 현재 시각: 시연 시각이 있으면 그 값 */
+export function currentAtIso(at: DemoAt): string {
+  return at.status === "on" ? at.at : toKstMinuteIso(Date.now());
+}
+
 // ---- 조회 (SWR) ----
 
 type Query = Record<string, string | number | boolean | undefined>;

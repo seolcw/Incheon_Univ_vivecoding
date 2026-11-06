@@ -11,3 +11,17 @@ export function toKstMinuteIso(time: number): string {
 export function formatKstTime(iso: string): string {
   return new Date(Date.parse(iso) + KST_OFFSET_MS).toISOString().slice(11, 16);
 }
+
+/** ISO 시각의 KST 날짜 "YYYY-MM-DD" */
+export function kstDate(iso: string): string {
+  return new Date(Date.parse(iso) + KST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+export function clockToMinutes(clock: string): number {
+  const [hours, minutes] = clock.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+export function minutesToClock(minutes: number): string {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}

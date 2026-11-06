@@ -37,12 +37,14 @@ export function describeRoom(room: RoomStatus): string {
         : "수업 중";
     case "closed":
       return "운영 시간이 아니에요";
-    case "meetup":
-    case "empty": {
-      const prefix = room.status === "meetup" ? `${room.currentTitle ?? "모임"} 모임 중, ` : "";
-      if (!room.freeUntil || formatKstTime(room.freeUntil) === CLOSE_CLOCK) return `${prefix}남은 수업 없음`;
-      return `${prefix}${room.freeMinutes}분 비어있음 (${formatKstTime(room.freeUntil)}까지)`;
+    case "meetup": {
+      const title = `${room.currentTitle ?? "모임"} 모임 중`;
+      if (!room.freeUntil || formatKstTime(room.freeUntil) === CLOSE_CLOCK) return `${title}, 남은 수업 없음`;
+      return `${title}, ${formatKstTime(room.freeUntil)}부터 수업`;
     }
+    case "empty":
+      if (!room.freeUntil || formatKstTime(room.freeUntil) === CLOSE_CLOCK) return "남은 수업 없음";
+      return `${room.freeMinutes}분 비어있음 (${formatKstTime(room.freeUntil)}까지)`;
   }
 }
 
