@@ -69,14 +69,15 @@ export function burstFrom(element: Element | null, options?: BurstOptions) {
  * 내 이름표가 버튼에서 빈자리로 날아가 앉는다. 돌려준 함수를 부르면 이름표를 치운다.
  * 저장이 끝나면 진짜 자리가 그 위치에 나타나므로, 저장을 기다리는 동안 이름표가 자리를 맡아 둔다.
  */
-export function flyToSeat(from: Element | null, to: Element | null, label: string, background: string) {
+export function flyToSeat(from: Element | null, to: Element | null, label: string | Element, background: string) {
   if (!from || !to || prefersReducedMotion()) return () => {};
   const start = from.getBoundingClientRect();
   const end = to.getBoundingClientRect();
   const size = end.width;
   const token = document.createElement("span");
   token.setAttribute("aria-hidden", "true");
-  token.textContent = label;
+  if (typeof label === "string") token.textContent = label;
+  else token.append(label.cloneNode(true));
   token.style.cssText = `position:fixed;left:0;top:0;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${background};color:var(--seat-foreground);font-size:${size * 0.42}px;font-weight:700;z-index:70;pointer-events:none`;
   document.body.append(token);
   const fromX = start.left + start.width / 2 - size / 2;

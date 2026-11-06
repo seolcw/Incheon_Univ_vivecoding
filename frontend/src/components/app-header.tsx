@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { DemoAtBadge } from "@/components/demo-at";
+import { ProfileButton } from "@/components/profile-button";
 import { Badge } from "@/components/ui/badge";
 import { USE_MOCK } from "@/lib/api";
 
@@ -104,8 +105,9 @@ export function AppHeader() {
             <MockBadge />
           </Suspense>
         )}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <DemoAtBadge />
+          <ProfileButton />
         </div>
       </div>
     </header>

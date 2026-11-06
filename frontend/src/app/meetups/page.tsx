@@ -7,6 +7,7 @@ import { MeetupCard } from "@/components/meetup-card";
 import { MeetupFormDialog } from "@/components/meetup-form-dialog";
 import { MockWriteNotice } from "@/components/mock-write-notice";
 import { RollingNumber } from "@/components/rolling-number";
+import { FaceOrInitial } from "@/components/avatar-face";
 import { seatColor, seatInitial, SeatRow } from "@/components/seat-row";
 import { ErrorState, LoadingState, RefreshFailedNote } from "@/components/states";
 import { currentAtIso, useDemoAt, useMeetups } from "@/lib/api";
@@ -79,7 +80,7 @@ export default function MeetupsPage() {
                   } as CSSProperties
                 }
               >
-                {seatInitial(member.nickname)}
+                <FaceOrInitial avatar={member.avatar} initial={seatInitial(member.nickname)} />
               </li>
             ))}
           </ul>

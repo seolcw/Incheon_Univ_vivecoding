@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties } from "react";
+import { FaceOrInitial } from "@/components/avatar-face";
 import { burstFrom } from "@/lib/motion";
 import type { MeetupMember } from "@/lib/types";
 
@@ -26,7 +27,7 @@ export function seatInitial(nickname: string) {
   return Array.from(nickname.trim())[0] ?? "";
 }
 
-export type SeatMember = Pick<MeetupMember, "userId" | "nickname">;
+export type SeatMember = Pick<MeetupMember, "userId" | "nickname" | "avatar">;
 
 /**
  * 모임의 자리. 찬 자리는 이름표, 빈자리는 점선이다.
@@ -116,7 +117,7 @@ export function SeatRow({
             color: "var(--seat-foreground)",
           } as CSSProperties}
         >
-          {seatInitial(member.nickname)}
+          <FaceOrInitial avatar={member.avatar} initial={seatInitial(member.nickname)} />
           <svg aria-hidden="true" viewBox="0 0 40 40" className="seat-ring">
             <circle cx="20" cy="20" r="19" pathLength="1" />
           </svg>

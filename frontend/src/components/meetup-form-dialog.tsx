@@ -224,6 +224,7 @@ function MeetupForm({ fixedRoom, at, onDone }: { fixedRoom?: RoomStatus; at: str
           maxMembers: members,
           userId: user.userId,
           nickname: user.nickname,
+          avatar: user.avatar,
         }),
       null,
     );
@@ -389,7 +390,7 @@ function MeetupForm({ fixedRoom, at, onDone }: { fixedRoom?: RoomStatus; at: str
           </Button>
         </div>
         <SeatRow
-          members={me ? [{ userId: me.userId, nickname: me.nickname }] : []}
+          members={me ? [{ userId: me.userId, nickname: me.nickname, avatar: me.avatar }] : []}
           maxMembers={seatPreviewCount}
           size="sm"
           waiting={false}
