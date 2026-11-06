@@ -112,7 +112,7 @@
 | startAt, endAt | string | ISO |
 | maxMembers | number | 2–30 |
 | hostId, hostNickname | string | |
-| members | {userId, nickname: string, joinedAt: string}[] | 주최자가 첫 번째 |
+| members | {userId, nickname: string, avatar?: string \| null, joinedAt: string}[] | 주최자가 첫 번째. `avatar`가 없거나 null이면 화면에 이름 첫 글자를 표시한다 |
 | memberCount | number | `members.length` |
 | isFull | boolean | `memberCount >= maxMembers` |
 | status | `"open"` / `"cancelled"` | |
@@ -283,6 +283,8 @@
 
 검증(순서대로): 필수 필드·타입·길이(`VALIDATION_ERROR`) → `roomId` 존재(`NOT_FOUND`) → `startAt`·`endAt`이 같은 날짜, 09:00 ≤ startAt < endAt ≤ 22:00, 15분 ≤ 길이 ≤ 240분(`VALIDATION_ERROR`) → `core.availability.check_meetup_slot`로 수업·open 모임 겹침(`ROOM_OCCUPIED`). `description` 생략 시 `""`. 과거 시각 제한은 없다(시연 시각 고정 때문).
 
+`avatar`는 선택 필드다. 문자열 또는 null이고, `피부-눈-머리스타일-머리색-액세서리-모자`를 숫자로 적는다(예: `2-1-3-0-0-1`). 정규식 `^\d{1,2}(-\d{1,2}){5}$`, 최대 17자. 형식이 틀리면 `VALIDATION_ERROR`. 서버는 값을 해석하지 않고 `members[]`에 저장한다.
+
 응답 201
 
 ```json
@@ -319,7 +321,7 @@
 { "userId": "a1f4c6e2-8b7d-4c3a-9e5f-1d2b3c4d5e6f", "nickname": "준호" }
 ```
 
-규칙: 이미 멤버면 변경 없이 200(멱등). `status != "open"` 또는 `endAt ≤ 서버 현재 시각`이면 `MEETUP_CLOSED`. `isFull`이면 `MEETUP_FULL`.
+규칙: 이미 멤버면 변경 없이 200(멱등). `status != "open"` 또는 `endAt ≤ 서버 현재 시각`이면 `MEETUP_CLOSED`. `isFull`이면 `MEETUP_FULL`. 본문에 선택 필드 `avatar`를 함께 보낼 수 있으며 형식은 `POST /api/meetups`와 같다. 이미 멤버면 `avatar`도 바꾸지 않는다.
 
 응답 200
 
