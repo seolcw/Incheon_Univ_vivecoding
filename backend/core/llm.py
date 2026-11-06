@@ -1,5 +1,6 @@
 """한 번의 제한된 OpenAI 호출로 검색 의도를 구조화한다. 키/질문은 로그에 남기지 않는다."""
 import os
+import logging
 from datetime import datetime, timezone
 from threading import Lock, BoundedSemaphore
 from typing import Literal
@@ -35,12 +36,16 @@ _lock = Lock()
 _slots = BoundedSemaphore(3)
 _day = ""
 _calls = 0
+_logger = logging.getLogger(__name__)
 
 
 def interpret(message: str) -> SearchIntent | None:
     global _day, _calls
     key = os.environ.get("OPENAI_API_KEY", "").strip()
-    if not key or not _slots.acquire(blocking=False):
+    if not key:
+        _logger.warning("횃불ON fallback: key_not_configured")
+        return None
+    if not _slots.acquire(blocking=False):
         return None
     try:
         try:
@@ -57,13 +62,17 @@ def interpret(message: str) -> SearchIntent | None:
         # 재시도 0, 최대 8초, 작은 출력. 호출 제한은 프로세스 재시작 시 초기화된다.
         with OpenAI(api_key=key, timeout=8.0, max_retries=0) as client:
             response = client.chat.completions.parse(
-                model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+                model=os.environ.get("OPENAI_MODEL", "").strip() or "gpt-4o-mini",
                 messages=[{"role": "system", "content": SYSTEM_PROMPT},
                           {"role": "user", "content": message}],
                 response_format=SearchIntent, max_completion_tokens=350,
             )
             return response.choices[0].message.parsed
-    except Exception:
+    except Exception as error:
+        # 키·질문·SDK 예외 원문은 기록하지 않고 허용된 진단 코드만 남긴다.
+        code = getattr(error, "code", None)
+        safe_code = code if code in {"invalid_api_key", "insufficient_quota", "model_not_found", "unsupported_value", "invalid_json_schema", "rate_limit_exceeded"} else "unknown"
+        _logger.warning("횃불ON fallback: %s status=%s code=%s", type(error).__name__, getattr(error, "status_code", None), safe_code)
         return None
     finally:
         _slots.release()
