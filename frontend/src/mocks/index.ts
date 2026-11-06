@@ -1,6 +1,5 @@
 // NEXT_PUBLIC_USE_MOCK=1일 때 조회만 대신하는 가짜 서버. 쓰기는 lib/api.ts에서 막는다(SPEC v1 §4).
-// campus.json은 SPEC v1 §5 시드 그대로이고, 상태 계산은 §3 규칙을 따른다.
-// 금 15:10 집계: 공학관 10/12(모임 1), 인문관 6/12, 자연관 3/12.
+// 시드는 정보대 1개 건물(mocks/campus.ts, docs/scope-change.md)이고, 상태 계산은 SPEC v1 §3 규칙을 따른다.
 
 import { ApiError } from "@/lib/api";
 import { KST_OFFSET_MS, toKstMinuteIso } from "@/lib/time";
@@ -13,10 +12,9 @@ import type {
   RoomStatus,
   RoomsResponse,
 } from "@/lib/types";
-import campus from "./campus.json";
+import { seedBuildings, seedRooms, type SeedRoom } from "./campus";
 
-type SeedBuilding = (typeof campus.buildings)[number];
-type SeedRoom = (typeof campus.rooms)[number];
+type SeedBuilding = (typeof seedBuildings)[number];
 
 const LATENCY_MS = 150;
 const OPEN = "09:00";
@@ -27,7 +25,7 @@ const demoMeetup: Meetup = {
   roomId: "eng-303",
   roomName: "303호",
   buildingId: "eng",
-  buildingName: "공학관",
+  buildingName: "정보대",
   floor: 3,
   title: "카공 모여라",
   category: "study",
@@ -75,7 +73,7 @@ function toRoomStatus(room: SeedRoom, at: Date): RoomStatus {
   const base = {
     id: room.id,
     buildingId: room.buildingId,
-    buildingName: campus.buildings.find((building) => building.id === room.buildingId)?.name ?? "",
+    buildingName: seedBuildings.find((building) => building.id === room.buildingId)?.name ?? "",
     floor: room.floor,
     name: room.name,
     capacity: room.capacity,
@@ -125,7 +123,7 @@ function summarize(rooms: RoomStatus[]) {
 }
 
 function toBuildingSummary(building: SeedBuilding, at: Date): BuildingSummary {
-  const rooms = campus.rooms.filter((room) => room.buildingId === building.id).map((room) => toRoomStatus(room, at));
+  const rooms = seedRooms.filter((room) => room.buildingId === building.id).map((room) => toRoomStatus(room, at));
   return {
     ...building,
     ...summarize(rooms),
@@ -140,7 +138,7 @@ function getBuildings(params: URLSearchParams): BuildingsResponse {
   const at = parseAt(params);
   return {
     at: toKstMinuteIso(at.getTime()),
-    buildings: campus.buildings.map((building) => toBuildingSummary(building, at)),
+    buildings: seedBuildings.map((building) => toBuildingSummary(building, at)),
   };
 }
 
@@ -150,10 +148,10 @@ function getRooms(params: URLSearchParams): RoomsResponse {
   const floor = params.get("floor");
   const status = params.get("status");
   const minFreeMinutes = params.get("minFreeMinutes");
-  if (buildingId && !campus.buildings.some((building) => building.id === buildingId)) {
+  if (buildingId && !seedBuildings.some((building) => building.id === buildingId)) {
     notFound("건물을 찾을 수 없어요.");
   }
-  const rooms = campus.rooms
+  const rooms = seedRooms
     .filter((room) => !buildingId || room.buildingId === buildingId)
     .filter((room) => floor === null || room.floor === Number(floor))
     .map((room) => toRoomStatus(room, at))
@@ -164,7 +162,7 @@ function getRooms(params: URLSearchParams): RoomsResponse {
 
 function getRoomDetail(roomId: string, params: URLSearchParams): RoomDetailResponse {
   const at = parseAt(params);
-  const room = campus.rooms.find((item) => item.id === roomId) ?? notFound("강의실을 찾을 수 없어요.");
+  const room = seedRooms.find((item) => item.id === roomId) ?? notFound("강의실을 찾을 수 없어요.");
   const { day, dayOfWeek } = kstParts(at);
   return {
     at: toKstMinuteIso(at.getTime()),
@@ -184,8 +182,8 @@ function getMeetups(params: URLSearchParams): MeetupsResponse {
   const at = parseAt(params);
   const roomId = params.get("roomId");
   const buildingId = params.get("buildingId");
-  if (roomId && !campus.rooms.some((room) => room.id === roomId)) notFound("강의실을 찾을 수 없어요.");
-  if (buildingId && !campus.buildings.some((building) => building.id === buildingId)) {
+  if (roomId && !seedRooms.some((room) => room.id === roomId)) notFound("강의실을 찾을 수 없어요.");
+  if (buildingId && !seedBuildings.some((building) => building.id === buildingId)) {
     notFound("건물을 찾을 수 없어요.");
   }
   const visible =
