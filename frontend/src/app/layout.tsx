@@ -5,6 +5,7 @@ import { DemoAtGate, DemoAtSync } from "@/components/demo-at";
 import { NicknameDialog } from "@/components/nickname-dialog";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { TorchChat } from "@/components/torch-chat";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             실제 시간표 기준이에요. 휴강·보강은 반영되지 않고, 시간표에 없는 시간이라고 문이 열려 있다는 뜻은 아니에요.
           </footer>
           <NicknameDialog />
+          <TorchChat />
           <Suspense fallback={null}>
             <DemoAtSync />
           </Suspense>

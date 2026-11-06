@@ -1,29 +1,29 @@
-"""Fixed contract examples only; no state calculation or AI calls."""
-
-import json
-
+"""정보대 횃불ON: 실제 시간표와 모임에 근거한 추천."""
 from fastapi import APIRouter
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
+from .availability import parse_at
+from .meetup_reader import list_open_meetups
+from .recommend import recommend
+from .routes_rooms import _api_error
 
-router = APIRouter()
+router = APIRouter(tags=["횃불ON"])
 
+class Location(BaseModel):
+    lat: float = Field(ge=-90, le=90, allow_inf_nan=False)
+    lng: float = Field(ge=-180, le=180, allow_inf_nan=False)
+
+class ChatRequest(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, str_strip_whitespace=True)
+    user_id: str = Field(min_length=1, max_length=64)
+    message: str = Field(min_length=1, max_length=300)
+    location: Location | None
+    at: str | None = None
 
 @router.post("/api/chat")
-def chat_stub() -> dict:
-    return json.loads('''
-{
-  "reply": "공학관 301호가 가장 가까워요. 17:00까지 비어 있고 콘센트가 있어서 2시간 공부하기 좋아요.",
-  "recommendations": [
-    {
-      "roomId": "eng-301", "roomName": "301호", "buildingId": "eng", "buildingName": "공학관", "floor": 3,
-      "status": "empty", "freeUntil": "2026-11-06T17:00:00+09:00", "freeMinutes": 110,
-      "walkMinutes": 2, "reason": "17:00까지 비어 있고 콘센트가 있어 장시간 공부에 적합"
-    },
-    {
-      "roomId": "eng-304", "roomName": "304호", "buildingId": "eng", "buildingName": "공학관", "floor": 3,
-      "status": "empty", "freeUntil": "2026-11-06T22:00:00+09:00", "freeMinutes": 410,
-      "walkMinutes": 2, "reason": "오늘 남은 수업이 없어 시간 제한 없이 사용 가능"
-    }
-  ],
-  "source": "llm"
-}
-''')
+def chat(body: ChatRequest) -> dict:
+    try:
+        at = parse_at(body.at)
+    except (ValueError, OverflowError):
+        raise _api_error("VALIDATION_ERROR", 400, "시각을 ISO 8601 형식으로 입력해 줘.") from None
+    return recommend(body.message, at, list_open_meetups(), has_location=body.location is not None)

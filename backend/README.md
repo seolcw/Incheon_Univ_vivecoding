@@ -74,3 +74,7 @@ $env:PYTHONPATH = (Resolve-Path ..).Path
 32개 단위/통합 검사와 프론트 production build 통과. 실제 Firestore 검사에서 26개 방 조회, 별도 요청의 모임 조회, 생성201, 다른 userId 참여200(1→2), 중복 참여 인원 유지, 로컬 서버 재시작 후 유지 확인. 검증 스크립트는 고유 hostId로 생성한 자기 검증 문서만 정리한다. 기존 모임과 demo-m1을 초기화하지 않는다.
 
 출처: [FastAPI 예외 처리](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Render FastAPI 배포](https://render.com/docs/deploy-fastapi). 외부 구현 코드는 복사하지 않았다.
+
+## 횃불ON 추천
+
+오른쪽 아래 횃불이를 눌러 ‘3층에서 두 시간 공부할 곳’이라고 입력한다. Render의 bingang-api에 OPENAI_API_KEY를 등록하면 AI 의도 해석을 사용한다. OPENAI_MODEL 기본 gpt-4o-mini, CHAT_DAILY_CALL_LIMIT 기본200. 키가 없거나 AI 호출이 실패하면 기본 추천임을 명시한다. 상세 구현·제약·이미지 출처는 docs/torch-on.md, 프롬프트 로그는 docs/prompts/torch-on-v1.md에 있다. 두 서비스에 최신 be-a를 수동 배포해야 한다.
