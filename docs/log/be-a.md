@@ -89,6 +89,10 @@
 - API 영향: 없음. 추천·DB·백엔드 변경 없음, 새 패키지 없음.
 - 확인 방법: frontend production build와 ESLint 통과. 로컬 프론트→공개 API의 실제 OpenAI 추천으로 3층120분 이상304/316/317 확인. 패널을 연 채 배경 정보대 지도 클릭→건물 화면 이동, Esc 접기와 횃불이 재클릭 시 대화 유지 확인. 공개 프론트 배포는 이어서 진행.
 
+## 13:27 작은 횃불이 채팅 공개 배포 완료
+- 작업 중 별도 통합에서 be-a가 origin/main 64eac9b로 갱신되고 UI 수정이 stash b1107c5에 보관됨을 확인. 변경 없는 torch-chat.tsx만 해당 stash에서 복원하고 다른 지도 변경·stash는 보존. 기존 lockfile로 npm ci 후 통합 build·ESLint 재통과.
+- 47b05ab를 origin/be-a에 push하고 Render bingang-web 배포 성공 확인. 공개 페이지에서 3D 지도와 우하단 마스코트·왼쪽 작은 패널, 실제 AI 추천(3층120분 이상304/317/302)을 확인. 결과는 당시 모임 상태에 따라 달라짐. 증거 화면은 저장소 밖 torch-compact-live.jpg에 저장. 로컬 검증 서버 종료. API 계약·추천 로직은 이번 변경에서 수정하지 않음.
+
 ## 13:27 main 통합 배포 및 공개 모임 초기화
 - 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
