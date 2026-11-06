@@ -41,3 +41,15 @@
 - API 영향: 없음(계약 변경 없음). 프론트는 건물 id "7"과 해당 건물의 강의실 name 형식("302호")에 의존.
 - 확인 방법: 목업 모드에서 `?at=2026-11-10T14%3A10%3A00%2B09%3A00`으로 지도→정보기술대학→3층→302호 상세 클릭 이동, 3층 302·304·313·317 초록, 311 빨강, 316 파랑, 상단 13(다른 건물 제외), `/buildings/15` 도면 없이 카드 표시, `/buildings/nope` 안내 표시, 폼의 강의실 12개가 건물 7만임을 확인. 일회성 스크립트로 집계·시연 장면·26개 방의 도면 연결 대조, `grep`으로 frontend/src에 eng 없음 확인, `npm run build`·`npm run lint` 통과.
 - 남은 문제: 실제 백엔드에 연결해 보지 않음(목업만) / 쓰기 흐름은 새 id로 스텁 재시험 안 함 / 하이픈 호수는 시드 26개에 없어 "506-1호" 형식이 실제 API와 같은지 미확인.
+
+## 12:39 main 통합
+- 바뀐 것: origin/be-a 60322fe, origin/be-b 383a755, fe 24801c1을 main에 병합해 푸시(1ef6206). backend/.env.example·errors.py·main.py·requirements.txt 충돌은 be-a 판으로 해결.
+- API 영향: 계약 변경 없음. be-a 판 main.py를 써서 `/api/chat` 스텁은 등록되지 않음.
+- 확인 방법: 백엔드 unittest 33개 중 32개 통과, 프론트 production build 통과. memory 저장소에 row_* 데이터와 demo-m1 ID를 임시로 넣어 TestClient로 시연 장면·생성 201·겹침 409·참여 2/4·나가기·취소·CORS 확인.
+- 남은 문제: CAMPUS_SOURCE=seed에서는 건물 "7"이 404라 be-a 수정 필요 / seed_demo.py의 firestore 값이 11/06 eng-303 / be-b 새 테스트 1개가 `backend.main` import 실패 / 15분 이하 수업 병합 미확인 / be-a ad8a7ee(배포 기록)는 다음 통합에 포함 / 실제 Firestore·공개 배포·두 기기로는 통합본 미확인.
+
+## 12:45 시연 건물 ID를 공개 서버 기준 eng로 복귀
+- 바뀐 것: `DEMO_BUILDING_ID`를 "eng"로, 목업과 `docs/reference/campus-info.json`을 `origin/be-a`의 `backend/seed/campus.json` 사본으로, `docs/scope-change.md`를 시드 방식으로 되돌림. 도면을 층·호수로 찾는 방식은 유지.
+- API 영향: 없음. 배포 설정 `CAMPUS_SOURCE=seed`의 응답(건물 `eng`, 강의실 `eng-*`)에 프론트를 맞춤.
+- 확인 방법: `npm run build`, `npm run lint`, `npx tsc --noEmit` 통과. 로컬 프론트를 공개 API에 연결해 `?at=2026-11-10T14%3A10%3A00%2B09%3A00`에서 상단 13개, `/buildings/eng`, 3층 강의실 6개 링크(`eng-302` 등), MOCK 배지 없음, 콘솔 오류 없음 확인. 쓰기 요청은 보내지 않음.
+- 남은 문제: 공개 DB에 시연 전 데이터가 정리되지 않음(`eng-302`에 검증 모임, `demo-m1` 없음). 이 수정은 아직 공개 배포에 반영되지 않음. 목업 모드 화면은 이번에 다시 확인하지 않음.

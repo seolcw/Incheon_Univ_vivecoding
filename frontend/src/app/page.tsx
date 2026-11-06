@@ -12,7 +12,7 @@ export default function HomePage() {
   if (!data && error) return <ErrorState message="캠퍼스 정보를 불러오지 못했어요." onRetry={() => mutate()} />;
   if (!data) return <LoadingState message="캠퍼스 현황을 불러오는 중이에요." skeletonClass="aspect-[10/9] max-w-2xl" />;
 
-  // API는 건물 20개를 돌려준다. 지도와 상단 숫자는 시연 건물만 쓴다.
+  // 지도와 상단 숫자는 시연 건물만 쓴다.
   const buildings = data.buildings
     .filter((building) => building.id === DEMO_BUILDING_ID)
     .map((building) => ({ ...building, map: DEMO_BUILDING_BLOCK }));
