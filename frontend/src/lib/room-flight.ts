@@ -37,6 +37,7 @@ export function handleRoomLinkClick(event: MouseEvent, origin: HTMLElement, room
 
 let hint: RoomHint | null = null;
 let returningName: string | null = null;
+let returnBox: Box | null = null;
 let overlay: HTMLElement | null = null;
 let flight: Animation | null = null;
 let safety: ReturnType<typeof setTimeout> | undefined;
@@ -53,8 +54,9 @@ export function peekRoomHint(roomId: string) {
 }
 
 /** 강의실 화면에서 도면으로 돌아왔을 때 그 칸을 표시하려고 한 번만 읽는다. */
-export function markRoomReturn(name: string) {
+export function markRoomReturn(name: string, hero: Element | null) {
   returningName = name;
+  returnBox = hero ? hero.getBoundingClientRect() : null;
 }
 
 export function takeRoomReturn(floorRooms: string[]) {
@@ -64,41 +66,94 @@ export function takeRoomReturn(floorRooms: string[]) {
   return name;
 }
 
+interface Box {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/** 본문 칸의 위치. 이동 뒤 스크롤은 맨 위이므로 머리글 높이부터 잰다. */
+function mainBox() {
+  const main = document.querySelector("main");
+  if (!main) return null;
+  const style = getComputedStyle(main);
+  const rect = main.getBoundingClientRect();
+  const left = rect.left + parseFloat(style.paddingLeft);
+  const width = rect.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const top = (document.querySelector("header")?.getBoundingClientRect().height ?? 0) + parseFloat(style.paddingTop);
+  return { left, top, width };
+}
+
+function flyPlate(from: Box, to: Box, background: string, radius: number) {
+  const element = document.createElement("div");
+  element.setAttribute("aria-hidden", "true");
+  element.style.cssText = `position:fixed;left:0;top:0;width:${to.width}px;height:${to.height}px;background:${background};border-radius:${radius}px;transform-origin:0 0;z-index:30;pointer-events:none`;
+  document.body.append(element);
+  const animation = element.animate(
+    [
+      {
+        transform: `translate(${from.left}px, ${from.top}px) scale(${from.width / to.width}, ${from.height / to.height})`,
+      },
+      { transform: `translate(${to.left}px, ${to.top}px) scale(1, 1)` },
+    ],
+    { duration: 440, easing: "cubic-bezier(0.16, 1, 0.3, 1)", fill: "forwards" },
+  );
+  return { element, animation };
+}
+
 export function launchRoomFlight(origin: HTMLElement, room: RoomStatus) {
   hint = toRoomHint(room);
   if (prefersReducedMotion()) return;
   clearOverlay();
-
-  const main = document.querySelector("main");
-  const header = document.querySelector("header");
-  if (!main) return;
-  const mainStyle = getComputedStyle(main);
-  const mainRect = main.getBoundingClientRect();
-  const left = mainRect.left + parseFloat(mainStyle.paddingLeft);
-  const width = mainRect.width - parseFloat(mainStyle.paddingLeft) - parseFloat(mainStyle.paddingRight);
-  const top = (header?.getBoundingClientRect().height ?? 0) + parseFloat(mainStyle.paddingTop);
-  const height = Math.min(window.innerHeight - top - 12, 620);
-  const from = origin.getBoundingClientRect();
-
-  const element = document.createElement("div");
-  element.setAttribute("aria-hidden", "true");
-  element.style.cssText = `position:fixed;left:0;top:0;width:${width}px;height:${height}px;background:var(--status-${room.status});border-radius:32px;transform-origin:0 0;z-index:30;pointer-events:none`;
-  document.body.append(element);
-  overlay = element;
-  flight = element.animate(
-    [
-      {
-        transform: `translate(${from.left}px, ${from.top}px) scale(${from.width / width}, ${from.height / height})`,
-      },
-      { transform: `translate(${left}px, ${top}px) scale(1, 1)` },
-    ],
-    { duration: 440, easing: "cubic-bezier(0.16, 1, 0.3, 1)", fill: "forwards" },
-  );
+  const box = mainBox();
+  if (!box) return;
+  const height = Math.min(window.innerHeight - box.top - 12, 620);
+  const plate = flyPlate(origin.getBoundingClientRect(), { ...box, height }, `var(--status-${room.status})`, 32);
+  overlay = plate.element;
+  flight = plate.animation;
   safety = setTimeout(clearOverlay, SAFETY_MS);
 }
 
+const WIDE_LAYOUT_PX = 1280;
+const SIDE_COLUMN_PX = 288 + 32;
+
+/** 지도에서 층 화면으로: 누른 곳에서 어두운 도면 무대가 펼쳐진다. 무대가 옆 칸에 있는 넓은 화면에서만 쓴다. */
+export function launchStageFlight(origin: HTMLElement) {
+  if (prefersReducedMotion() || window.innerWidth < WIDE_LAYOUT_PX) return;
+  clearOverlay();
+  const box = mainBox();
+  if (!box) return;
+  const target = {
+    left: box.left + SIDE_COLUMN_PX,
+    top: box.top,
+    width: box.width - SIDE_COLUMN_PX,
+    height: window.innerHeight - box.top - 12,
+  };
+  const plate = flyPlate(origin.getBoundingClientRect(), target, "var(--stage)", 32);
+  overlay = plate.element;
+  flight = plate.animation;
+  safety = setTimeout(clearOverlay, SAFETY_MS);
+}
+
+/** 강의실에서 도면으로 돌아오면 색면이 다시 그 칸으로 줄어든다. 칸이 화면 밖이면 생략한다. */
+export function landOnCell(cell: HTMLElement, status: RoomStatusValue) {
+  const from = returnBox;
+  returnBox = null;
+  if (!from || prefersReducedMotion()) return;
+  const to = cell.getBoundingClientRect();
+  if (to.bottom < 0 || to.top > window.innerHeight || to.right < 0 || to.left > window.innerWidth) return;
+  const plate = flyPlate(from, to, `var(--status-${status})`, 10);
+  void plate.animation.finished
+    .catch(() => undefined)
+    .then(() =>
+      plate.element.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: "ease-out", fill: "forwards" }).finished,
+    )
+    .finally(() => plate.element.remove());
+}
+
 /** 도착 화면이 그려진 뒤 호출한다. 비행이 끝나면 덮개를 걷는다. */
-export function settleRoomFlight() {
+export function settleFlight() {
   const element = overlay;
   const running = flight;
   if (!element || !running) return;

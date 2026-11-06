@@ -95,11 +95,16 @@ export default function MeetupsPage() {
       )}
 
       {meetups.length > 0 && (
-        <div className="grid items-start gap-4 md:grid-cols-2">
-          {meetups.map((meetup, index) => (
-            <MeetupCard key={meetup.id} meetup={meetup} at={at} index={index + 2} />
-          ))}
-        </div>
+        <section aria-labelledby="meetup-list-title">
+          <h2 id="meetup-list-title" className="sr-only">
+            모임 목록
+          </h2>
+          <div className="grid items-start gap-4 md:grid-cols-2">
+            {meetups.map((meetup, index) => (
+              <MeetupCard key={meetup.id} meetup={meetup} at={at} index={index + 2} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

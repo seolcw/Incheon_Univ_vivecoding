@@ -80,7 +80,7 @@
   --app-font: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
 
   /* 강의실 상태: 비어있음 초록 / 모임 중 파랑 / 수업 중 빨강 / 운영 종료 회색 */
-  --status-empty: oklch(0.55 0.165 152);
+  --status-empty: oklch(0.53 0.16 152);
   --status-meetup: oklch(0.51 0.225 263);
   --status-class: oklch(0.55 0.215 27);
   --status-closed: oklch(0.5 0.02 264);
@@ -509,6 +509,10 @@
   height: 1.08em;
   line-height: 1.08;
   text-align: center;
+}
+/* 굴러가는 숫자판의 글자는 CSS로 그려 본문 텍스트에 섞이지 않게 한다. */
+.roll-strip > span::before {
+  content: attr(data-digit);
 }
 
 /* ---------- 상태 색 ---------- */

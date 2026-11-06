@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { PLAN_VIEWBOX, type FloorPlan, type PlanCell } from "@/lib/floor-plans";
 import { prefersReducedMotion } from "@/lib/motion";
-import { handleRoomLinkClick, takeRoomReturn } from "@/lib/room-flight";
+import { handleRoomLinkClick, landOnCell, takeRoomReturn } from "@/lib/room-flight";
 import { describeRoom, freeFuel, planCaption, ROOM_STATUS_META } from "@/lib/room-status";
 import type { RoomStatus } from "@/lib/types";
 
@@ -78,8 +78,14 @@ function RoomCell({
 }) {
   const meta = ROOM_STATUS_META[room.status];
   const roomy = cell.h >= TWO_LINE_MIN_HEIGHT;
+  const link = useRef<HTMLAnchorElement>(null);
+  const roomStatus = room.status;
+  useEffect(() => {
+    if (returned && link.current) landOnCell(link.current, roomStatus);
+  }, [returned, roomStatus]);
   return (
     <Link
+      ref={link}
       href={`/rooms/${encodeURIComponent(room.id)}`}
       prefetch={false}
       aria-label={`${room.name}, ${room.status === "class" ? "" : `${meta.label}, `}${describeRoom(room)}`}

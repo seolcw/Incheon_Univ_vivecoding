@@ -25,7 +25,7 @@ export function RollingNumber({ value, className }: { value: number; className?:
             style={{ transform: `translateY(${-Number(digit) * 10}%)`, transitionDelay: `${index * 50}ms` }}
           >
             {DIGITS.map((item) => (
-              <span key={item}>{item}</span>
+              <span key={item} data-digit={item} />
             ))}
           </span>
         </span>

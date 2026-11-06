@@ -3,7 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FloorElevator } from "@/components/floor-elevator";
 import { FloorPlanView } from "@/components/floor-plan-view";
 import { FreeTimeSlider } from "@/components/free-time-slider";
@@ -14,6 +14,7 @@ import { RoomStatusLegend } from "@/components/status-legend";
 import { Button } from "@/components/ui/button";
 import { useBuildings, useRooms } from "@/lib/api";
 import { getFloorPlan } from "@/lib/floor-plans";
+import { settleFlight } from "@/lib/room-flight";
 import { describeRoom, floorLabel, ROOM_STATUS_META } from "@/lib/room-status";
 import type { RoomStatus, RoomStatusValue } from "@/lib/types";
 
@@ -71,6 +72,10 @@ export function BuildingScreen() {
   const pathname = usePathname();
   const [minFreeMinutes, setMinFreeMinutes] = useState(0);
   const [inspected, setInspected] = useState<RoomStatus | null>(null);
+
+  useEffect(() => {
+    settleFlight();
+  }, []);
 
   const buildings = useBuildings();
   const building = buildings.data?.buildings.find((item) => item.id === buildingId);

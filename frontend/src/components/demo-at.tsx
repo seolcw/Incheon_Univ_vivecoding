@@ -34,7 +34,9 @@ export function DemoAtBadge() {
     <div className="reveal flex items-center gap-0.5 rounded-full bg-foreground py-0.5 pr-0.5 pl-3 text-background">
       <span className="flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap tabular-nums">
         <span aria-hidden="true" className="live-dot text-status-empty" />
-        시연<span className="max-sm:sr-only"> 시각</span> {formatKstTime(demoAt.at)}
+        <span>
+          시연<span className="max-sm:sr-only"> 시각</span> {formatKstTime(demoAt.at)}
+        </span>
       </span>
       <Button
         variant="ghost"

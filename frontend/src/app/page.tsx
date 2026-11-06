@@ -9,6 +9,7 @@ import { ErrorState, LoadingState, RefreshFailedNote } from "@/components/states
 import { BuildingLegend } from "@/components/status-legend";
 import { useBuildings, useRooms } from "@/lib/api";
 import { DEMO_BUILDING_BLOCK, DEMO_BUILDING_ID } from "@/lib/demo-building";
+import { launchStageFlight } from "@/lib/room-flight";
 import { formatKstTime, KST_OFFSET_MS } from "@/lib/time";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -74,7 +75,14 @@ export default function HomePage() {
         {error && <RefreshFailedNote />}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+      <div
+        className="flex min-w-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        onClickCapture={(event) => {
+          // 지도 안의 건물 링크를 고치지 않고 눌린 위치만 읽어 전환을 시작한다.
+          const link = (event.target as Element).closest<HTMLElement>('a[href^="/buildings/"]');
+          if (link && !event.metaKey && !event.ctrlKey && !event.shiftKey) launchStageFlight(link);
+        }}
+      >
         <CampusMap buildings={buildings} at={data.at} />
         <BuildingLegend />
       </div>

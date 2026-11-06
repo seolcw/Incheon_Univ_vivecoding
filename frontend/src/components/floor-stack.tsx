@@ -1,6 +1,9 @@
+"use client";
+
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { RoomDots } from "@/components/room-dots";
+import { launchStageFlight } from "@/lib/room-flight";
 import { floorLabel } from "@/lib/room-status";
 import type { BuildingSummary, RoomStatus } from "@/lib/types";
 
@@ -15,6 +18,7 @@ export function FloorStack({ building, rooms }: { building: BuildingSummary; roo
             <Link
               href={`/buildings/${encodeURIComponent(building.id)}?floor=${summary.floor}`}
               prefetch={false}
+              onClick={(event) => launchStageFlight(event.currentTarget)}
               className="group flex min-h-12 items-center gap-3 rounded-sm py-2 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               <span className="w-10 shrink-0 font-bold tracking-[-0.02em] transition-transform duration-300 ease-settle group-hover:translate-x-1">

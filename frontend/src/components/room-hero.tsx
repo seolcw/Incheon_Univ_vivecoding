@@ -6,7 +6,7 @@ import { useEffect, type ReactNode } from "react";
 import { RollingNumber } from "@/components/rolling-number";
 import { SeatRow } from "@/components/seat-row";
 import { TimeRibbon } from "@/components/time-ribbon";
-import { markRoomReturn, settleRoomFlight, type RoomHint } from "@/lib/room-flight";
+import { markRoomReturn, settleFlight, type RoomHint } from "@/lib/room-flight";
 import { describeRoom, floorLabel, roomFacts, ROOM_STATUS_META } from "@/lib/room-status";
 import { formatKstTime } from "@/lib/time";
 import type { RoomDetail } from "@/lib/types";
@@ -52,7 +52,7 @@ export function RoomHero({
   note?: ReactNode;
 }) {
   useEffect(() => {
-    settleRoomFlight();
+    settleFlight();
   }, []);
 
   const meta = ROOM_STATUS_META[head.status];
@@ -73,7 +73,7 @@ export function RoomHero({
           <Link
             href={`/buildings/${encodeURIComponent(head.buildingId)}?floor=${head.floor}`}
             prefetch={false}
-            onClick={() => markRoomReturn(head.name)}
+            onClick={(event) => markRoomReturn(head.name, event.currentTarget.closest("section"))}
             className="group flex min-h-8 items-center gap-1.5 rounded-sm text-sm font-medium outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <ArrowLeft
