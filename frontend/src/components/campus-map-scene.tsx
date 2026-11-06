@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, invalidate, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, invalidate, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
@@ -9,10 +9,13 @@ import {
   CAMPUS_BLOCKS,
   CAMPUS_FIELD,
   CAMPUS_GROUND,
+  CAMPUS_HEDGES,
+  CAMPUS_PATHS,
   CAMPUS_ROADS,
+  CAMPUS_ROUNDABOUT,
   CAMPUS_TREES,
   type CampusBlock,
-  type CampusPart,
+  type CampusRect,
 } from "@/lib/campus-blocks";
 import { BUILDING_LEVEL_META, buildingLevel } from "@/lib/room-status";
 import type { BuildingSummary } from "@/lib/types";
@@ -23,18 +26,53 @@ const ROTATION = {
 };
 const DRAG_THRESHOLD_PX = 5;
 const DRAG_SPEED = 0.006;
-const CAMERA_DISTANCE = 300;
-const FLOOR_GAP_RATIO = 0.24;
+const CAMERA_DISTANCE = 306;
 const LABEL_GAP = 0.6;
 const LABEL_CARET_PX = 5;
 
-const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
-const UNIT_CYLINDER = new THREE.CylinderGeometry(0.5, 0.5, 1, 12);
+const RIBBON = { offset: 0.56, ratio: 0.44, proud: 0.1 };
+const ROOF_INSET = 0.5;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /** 토큰 색을 재현하려고 지붕에 닿는 빛의 합을 π에 맞춘다(톤 매핑 없음). */
 const LIGHT = { ambient: 1.72, sun: 1.78, position: [-68, 112, 50] as const };
+
+/** 앞쪽(+z)으로 낮아지는 경사 지붕. 체육관과 스포츠센터에 쓴다. */
+function createWedge() {
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const position = geometry.attributes.position;
+  for (let index = 0; index < position.count; index += 1) {
+    if (position.getY(index) > 0 && position.getZ(index) > 0) position.setY(index, 0.02);
+  }
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/** 전망타워: 허리가 잘록하고 위가 넓다. */
+function createHourglass() {
+  const profile: [number, number][] = [
+    [0.36, 0],
+    [0.27, 0.18],
+    [0.22, 0.38],
+    [0.27, 0.6],
+    [0.38, 0.82],
+    [0.5, 1],
+    [0, 1],
+  ];
+  const geometry = new THREE.LatheGeometry(
+    profile.map(([radius, y]) => new THREE.Vector2(radius, y)),
+    14,
+  );
+  geometry.translate(0, -0.5, 0);
+  return geometry;
+}
+
+const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
+const UNIT_CYLINDER = new THREE.CylinderGeometry(0.5, 0.5, 1, 18);
+const UNIT_PLANE = new THREE.PlaneGeometry(1, 1);
+const UNIT_WEDGE = createWedge();
+const UNIT_HOURGLASS = createHourglass();
 
 // 씬 중심을 원점에 둔다.
 const toWorld = (x: number, z: number): [number, number] => [x - CAMPUS_GROUND.x, z - CAMPUS_GROUND.z];
@@ -61,55 +99,160 @@ function readFill(className: string): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+const mixColors = (from: string, to: string, amount: number) =>
+  `#${new THREE.Color(from).lerp(new THREE.Color(to), amount).getHexString()}`;
+
+const darken = (color: string, amount: number) => `#${new THREE.Color(color).multiplyScalar(amount).getHexString()}`;
+
 function readPalette() {
+  const ground = readFill("fill-plan-ground");
+  const road = readFill("fill-plan-corridor");
+  const structure = readFill("fill-plan-structure");
+  const text = readFill("fill-plan-text");
   return {
-    ground: readFill("fill-plan-ground"),
-    road: readFill("fill-plan-corridor"),
-    structure: readFill("fill-plan-structure"),
-    text: readFill("fill-plan-text"),
+    ground,
+    road,
+    structure,
+    text,
+    path: mixColors(ground, road, 0.55),
+    glass: mixColors(structure, text, 0.42),
+    roof: mixColors(structure, text, 0.1),
+    tree: mixColors(structure, text, 0.16),
   };
 }
 
 type Palette = ReturnType<typeof readPalette>;
 
-function Part({ part, color, shadow = true }: { part: CampusPart; color: string; shadow?: boolean }) {
-  const [x, z] = toWorld(part.x, part.z);
+interface Placement {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+  h: number;
+  d: number;
+}
+
+const ignoreRaycast = () => null;
+
+function Instances({
+  geometry,
+  items,
+  color,
+  castShadow = false,
+  flatShading = false,
+  hittable = false,
+}: {
+  geometry: THREE.BufferGeometry;
+  items: Placement[];
+  color: string;
+  castShadow?: boolean;
+  flatShading?: boolean;
+  hittable?: boolean;
+}) {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const target = mesh.current;
+    if (!target) return;
+    const transform = new THREE.Object3D();
+    items.forEach((item, index) => {
+      transform.position.set(item.x, item.y, item.z);
+      transform.scale.set(item.w, item.h, item.d);
+      transform.updateMatrix();
+      target.setMatrixAt(index, transform.matrix);
+    });
+    target.instanceMatrix.needsUpdate = true;
+    invalidate();
+  }, [items]);
+
+  if (items.length === 0) return null;
   return (
-    <mesh
-      geometry={part.round ? UNIT_CYLINDER : UNIT_BOX}
-      position={[x, part.h / 2, z]}
-      scale={[part.w, part.h, part.d]}
-      castShadow={shadow}
+    <instancedMesh
+      key={items.length}
+      ref={mesh}
+      args={[geometry, undefined, items.length]}
+      castShadow={castShadow}
       receiveShadow
+      frustumCulled={false}
+      {...(hittable ? {} : { raycast: ignoreRaycast })}
     >
-      <meshLambertMaterial color={color} />
-    </mesh>
+      <meshLambertMaterial color={color} flatShading={flatShading} />
+    </instancedMesh>
   );
 }
 
-/** 층이 드러나게 쌓은 건물: 안쪽 기둥 위로 층 판을 올린다. */
-function StackedPart({ part, floors, color }: { part: CampusPart; floors: number; color: string }) {
-  const floorHeight = part.h / floors;
-  const gap = floorHeight * FLOOR_GAP_RATIO;
+/** 건물 조각을 재질과 모양별로 모은다. 건물이 많아도 그리기 호출이 늘지 않는다. */
+function collectInstances(blocks: CampusBlock[]) {
+  const wallBoxes: Placement[] = [];
+  const glassBoxes: Placement[] = [];
+  const wallRounds: Placement[] = [];
+  const glassRounds: Placement[] = [];
+  const wedges: Placement[] = [];
+  const hourglasses: Placement[] = [];
+  const ribbons: Placement[] = [];
+  const roofs: Placement[] = [];
+
+  for (const part of blocks.flatMap((block) => block.parts)) {
+    const [x, z] = toWorld(part.x, part.z);
+    const base = part.y ?? 0;
+    const placement = { x, y: base + part.h / 2, z, w: part.w, h: part.h, d: part.d };
+    const isGlass = part.tone === "glass";
+
+    if (part.shape === "wedge") wedges.push(placement);
+    else if (part.shape === "hourglass") hourglasses.push(placement);
+    else if (part.shape === "round") (isGlass ? glassRounds : wallRounds).push(placement);
+    else {
+      (isGlass ? glassBoxes : wallBoxes).push(placement);
+      const floorHeight = part.floors ? part.h / part.floors : 0;
+      for (let floor = 0; floor < (part.floors ?? 0); floor += 1) {
+        ribbons.push({
+          x,
+          y: base + floorHeight * (floor + RIBBON.offset),
+          z,
+          w: part.w + RIBBON.proud,
+          h: floorHeight * RIBBON.ratio,
+          d: part.d + RIBBON.proud,
+        });
+      }
+      // 난간이 남도록 지붕을 안쪽으로 한 겹 덮는다.
+      if (!isGlass && Math.min(part.w, part.d) >= 2 && (part.h >= 1 || part.decal)) {
+        roofs.push({ x, y: base + part.h + 0.012, z, w: part.w - ROOF_INSET, h: 0.024, d: part.d - ROOF_INSET });
+      }
+    }
+  }
+  return { wallBoxes, glassBoxes, wallRounds, glassRounds, wedges, hourglasses, ribbons, roofs };
+}
+
+function BlockMeshes({
+  blocks,
+  wall,
+  glass,
+  roof,
+  hittable = false,
+}: {
+  blocks: CampusBlock[];
+  wall: string;
+  glass: string;
+  roof: string;
+  hittable?: boolean;
+}) {
+  const items = useMemo(() => collectInstances(blocks), [blocks]);
   return (
     <>
-      <Part part={{ ...part, w: part.w - 0.5, d: part.d - 0.5 }} color={color} />
-      {Array.from({ length: floors }, (_, floor) => {
-        const [x, z] = toWorld(part.x, part.z);
-        const slabHeight = floorHeight - gap;
-        return (
-          <mesh
-            key={floor}
-            geometry={UNIT_BOX}
-            position={[x, floorHeight * (floor + 1) - slabHeight / 2, z]}
-            scale={[part.w, slabHeight, part.d]}
-            castShadow
-            receiveShadow
-          >
-            <meshLambertMaterial color={color} />
-          </mesh>
-        );
-      })}
+      <Instances geometry={UNIT_BOX} items={items.wallBoxes} color={wall} castShadow hittable={hittable} />
+      <Instances geometry={UNIT_BOX} items={items.glassBoxes} color={glass} castShadow hittable={hittable} />
+      <Instances geometry={UNIT_CYLINDER} items={items.wallRounds} color={wall} castShadow hittable={hittable} />
+      <Instances geometry={UNIT_CYLINDER} items={items.glassRounds} color={glass} castShadow hittable={hittable} />
+      <Instances geometry={UNIT_WEDGE} items={items.wedges} color={wall} castShadow hittable={hittable} />
+      <Instances
+        geometry={UNIT_HOURGLASS}
+        items={items.hourglasses}
+        color={glass}
+        castShadow
+        flatShading
+        hittable={hittable}
+      />
+      <Instances geometry={UNIT_BOX} items={items.ribbons} color={glass} />
+      <Instances geometry={UNIT_BOX} items={items.roofs} color={roof} />
     </>
   );
 }
@@ -125,7 +268,7 @@ function footprint(block: CampusBlock) {
     z: (minZ + maxZ) / 2,
     w: maxX - minX,
     d: maxZ - minZ,
-    h: Math.max(...block.parts.map((part) => part.h)),
+    h: Math.max(...block.parts.map((part) => (part.y ?? 0) + part.h)),
   };
 }
 
@@ -140,6 +283,7 @@ function LiveBuilding({
   onSelect: () => void;
   onHoverChange: (hovered: boolean) => void;
 }) {
+  const blocks = useMemo(() => [block], [block]);
   const box = footprint(block);
   const [boxX, boxZ] = toWorld(box.x, box.z);
   return (
@@ -156,39 +300,19 @@ function LiveBuilding({
     >
       {/* 중정처럼 뚫린 곳을 눌러도 건물을 누른 것으로 친다. */}
       <mesh geometry={UNIT_BOX} position={[boxX, box.h / 2, boxZ]} scale={[box.w, box.h, box.d]} visible={false} />
-      {block.parts.map((part) =>
-        block.floors ? (
-          <StackedPart key={`${part.x}-${part.z}`} part={part} floors={block.floors} color={color} />
-        ) : (
-          <Part key={`${part.x}-${part.z}`} part={part} color={color} />
-        ),
-      )}
+      <BlockMeshes blocks={blocks} wall={color} glass={darken(color, 0.34)} roof={darken(color, 0.84)} />
     </group>
   );
 }
 
-/** 글자가 들어갈 만큼 넓은 지붕을 고른다. */
 const DECAL_ASPECT = 2.6;
 const DECAL_MAX_WIDTH = 8;
-const DECAL_MIN_WIDTH = 4.5;
+// 폰 너비에서는 글자를 읽을 수 없어 숨긴다. 범례가 회색의 뜻을 알려 준다.
+const DECAL_MIN_CANVAS_PX = 480;
 
-function roofForDecal(block: CampusBlock) {
-  let best: { part: CampusPart; width: number } | null = null;
-  for (const part of block.parts) {
-    if (part.round) continue;
-    const width = Math.min(part.w * 0.86, part.d * 0.8 * DECAL_ASPECT, DECAL_MAX_WIDTH);
-    if (!best || width > best.width) best = { part, width };
-  }
-  return best && best.width >= DECAL_MIN_WIDTH ? best : null;
-}
-
-function abovePart(part: CampusPart): [number, number, number] {
-  const [x, z] = toWorld(part.x, part.z);
-  return [x, part.h + 0.04, z];
-}
-
-function PreparingBuildings({ blocks, palette }: { blocks: CampusBlock[]; palette: Palette }) {
-  const decalMaterial = useMemo(() => {
+function RoofDecals({ blocks, color }: { blocks: CampusBlock[]; color: string }) {
+  const isWide = useThree((state) => state.size.width >= DECAL_MIN_CANVAS_PX);
+  const material = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 416;
     canvas.height = 160;
@@ -198,79 +322,95 @@ function PreparingBuildings({ blocks, palette }: { blocks: CampusBlock[]; palett
       context.font = `700 92px ${font}`;
       context.textAlign = "center";
       context.textBaseline = "middle";
-      context.fillStyle = palette.text;
+      context.fillStyle = color;
       context.fillText("준비 중", canvas.width / 2, canvas.height / 2);
     }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 8;
     return new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
-  }, [palette.text]);
+  }, [color]);
 
   useEffect(
     () => () => {
-      decalMaterial.map?.dispose();
-      decalMaterial.dispose();
+      material.map?.dispose();
+      material.dispose();
     },
-    [decalMaterial],
+    [material],
   );
 
+  if (!isWide) return null;
+  return blocks
+    .flatMap((block) => block.parts)
+    .filter((part) => part.decal)
+    .map((part) => {
+      const [x, z] = toWorld(part.x, part.z);
+      const width = Math.min((part.w - ROOF_INSET) * 0.86, (part.d - ROOF_INSET) * 0.8 * DECAL_ASPECT, DECAL_MAX_WIDTH);
+      return (
+        <mesh
+          key={`${part.x}-${part.z}`}
+          geometry={UNIT_PLANE}
+          material={material}
+          position={[x, (part.y ?? 0) + part.h + 0.05, z]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          scale={[width, width / DECAL_ASPECT, 1]}
+          raycast={ignoreRaycast}
+        />
+      );
+    });
+}
+
+function PreparingBuildings({ blocks, palette }: { blocks: CampusBlock[]; palette: Palette }) {
   return (
     // 핸들러가 있어야 앞 건물이 포인터를 막아, 가려진 정보대가 눌리지 않는다.
     <group
       onClick={(event: ThreeEvent<MouseEvent>) => event.stopPropagation()}
       onPointerOver={(event: ThreeEvent<PointerEvent>) => event.stopPropagation()}
     >
-      {blocks.map((block) => {
-        const roof = roofForDecal(block);
-        return (
-          <group key={block.id}>
-            {block.parts.map((part) => (
-              <Part key={`${part.x}-${part.z}`} part={part} color={palette.structure} />
-            ))}
-            {roof && (
-              <mesh
-                material={decalMaterial}
-                position={abovePart(roof.part)}
-                rotation={[-Math.PI / 2, 0, 0]}
-                raycast={() => null}
-              >
-                <planeGeometry args={[roof.width, roof.width / DECAL_ASPECT]} />
-              </mesh>
-            )}
-          </group>
-        );
-      })}
+      <BlockMeshes blocks={blocks} wall={palette.structure} glass={palette.glass} roof={palette.roof} hittable />
+      <RoofDecals blocks={blocks} color={palette.text} />
     </group>
   );
 }
 
+function flatRects(rects: CampusRect[], y: number, h: number): Placement[] {
+  return rects.map((rect) => {
+    const [x, z] = toWorld(rect.x, rect.z);
+    return { x, y, z, w: rect.w, h, d: rect.d };
+  });
+}
+
+const ROAD_ITEMS = flatRects(CAMPUS_ROADS, 0.03, 0.06);
+const PATH_ITEMS = flatRects(CAMPUS_PATHS, 0.015, 0.03);
+const HEDGE_ITEMS: Placement[] = CAMPUS_HEDGES.map((hedge) => {
+  const [x, z] = toWorld(hedge.x, hedge.z);
+  return { x, y: hedge.h / 2, z, w: hedge.w, h: hedge.h, d: hedge.d };
+});
+
+function FlatDisc({ x, z, w, d, y, color }: { x: number; z: number; w: number; d: number; y: number; color: string }) {
+  const [worldX, worldZ] = toWorld(x, z);
+  return (
+    <mesh geometry={UNIT_CYLINDER} position={[worldX, y, worldZ]} scale={[w, 0.08, d]} receiveShadow>
+      <meshLambertMaterial color={color} />
+    </mesh>
+  );
+}
+
 function Ground({ palette }: { palette: Palette }) {
-  const [fieldX, fieldZ] = toWorld(CAMPUS_FIELD.x, CAMPUS_FIELD.z);
+  const { x: fieldX, z: fieldZ, w: fieldW, d: fieldD } = CAMPUS_FIELD;
+  const { x: ringX, z: ringZ, outer, inner } = CAMPUS_ROUNDABOUT;
   return (
     <group>
       <mesh geometry={UNIT_BOX} position={[0, -2, 0]} scale={[CAMPUS_GROUND.w, 4, CAMPUS_GROUND.d]} receiveShadow>
         <meshLambertMaterial color={palette.ground} />
       </mesh>
-      {CAMPUS_ROADS.map((road) => {
-        const [x, z] = toWorld(road.x, road.z);
-        return (
-          <mesh key={`${road.x}-${road.z}`} geometry={UNIT_BOX} position={[x, 0.02, z]} scale={[road.w, 0.04, road.d]} receiveShadow>
-            <meshLambertMaterial color={palette.road} />
-          </mesh>
-        );
-      })}
-      <mesh geometry={UNIT_CYLINDER} position={[fieldX, 0.05, fieldZ]} scale={[CAMPUS_FIELD.w, 0.1, CAMPUS_FIELD.d]} receiveShadow>
-        <meshLambertMaterial color={palette.structure} />
-      </mesh>
-      <mesh
-        geometry={UNIT_CYLINDER}
-        position={[fieldX, 0.08, fieldZ]}
-        scale={[CAMPUS_FIELD.w - 5, 0.12, CAMPUS_FIELD.d - 5]}
-        receiveShadow
-      >
-        <meshLambertMaterial color={palette.road} />
-      </mesh>
+      <Instances geometry={UNIT_BOX} items={ROAD_ITEMS} color={palette.road} />
+      <Instances geometry={UNIT_BOX} items={PATH_ITEMS} color={palette.path} />
+      <Instances geometry={UNIT_BOX} items={HEDGE_ITEMS} color={palette.tree} castShadow />
+      <FlatDisc x={ringX} z={ringZ} w={outer} d={outer} y={0.04} color={palette.road} />
+      <FlatDisc x={ringX} z={ringZ} w={inner} d={inner} y={0.08} color={palette.ground} />
+      <FlatDisc x={fieldX} z={fieldZ} w={fieldW} d={fieldD} y={0.04} color={palette.structure} />
+      <FlatDisc x={fieldX} z={fieldZ} w={fieldW - 5} d={fieldD - 5} y={0.08} color={palette.road} />
     </group>
   );
 }
@@ -291,7 +431,7 @@ function Trees({ color }: { color: string }) {
     mesh.current.instanceMatrix.needsUpdate = true;
   }, []);
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, CAMPUS_TREES.length]} castShadow raycast={() => null}>
+    <instancedMesh ref={mesh} args={[undefined, undefined, CAMPUS_TREES.length]} castShadow raycast={ignoreRaycast}>
       <icosahedronGeometry args={[1, 0]} />
       <meshLambertMaterial color={color} flatShading />
     </instancedMesh>
@@ -311,7 +451,7 @@ interface LabelAnchor {
 }
 
 // 원근 때문에 앞쪽이 커 보이므로 바닥 중심보다 앞을 본다.
-const CAMERA_TARGET = new THREE.Vector3(1, 0, 7);
+const CAMERA_TARGET = new THREE.Vector3(1, 0, 6);
 
 /** 카메라와 건물 이름표. 그리는 프레임에서만 돌고, 움직임이 남았을 때만 다음 프레임을 요청한다. */
 function CameraRig({
@@ -392,8 +532,12 @@ export function CampusMapScene({
       }),
     [buildings, at],
   );
-  const liveIds = new Set(live.map(({ block }) => block.id));
-  const preparing = CAMPUS_BLOCKS.filter((block) => !liveIds.has(block.id));
+  // 시간표를 다시 받아도 건물 구성이 같으면 회색 건물을 다시 배치하지 않는다.
+  const buildingIds = buildings.map((building) => building.id).join("|");
+  const preparing = useMemo(() => {
+    const ids = new Set(buildingIds.split("|"));
+    return CAMPUS_BLOCKS.filter((block) => !ids.has(block.id));
+  }, [buildingIds]);
   const anchors = useMemo<LabelAnchor[]>(
     () =>
       live.map(({ block }) => {
@@ -483,7 +627,7 @@ export function CampusMapScene({
         />
         <CameraRig orbitRef={orbit} anchors={anchors} labelsRef={labels} reducedMotion={reducedMotion} />
         <Ground palette={palette} />
-        <Trees color={palette.structure} />
+        <Trees color={palette.tree} />
         <PreparingBuildings blocks={preparing} palette={palette} />
         {live.map(({ block, building, fill }) => (
           <LiveBuilding
@@ -516,10 +660,7 @@ export function CampusMapScene({
           <span className="font-medium tabular-nums">
             {building.emptyCount}/{building.totalCount}
           </span>
-          <span
-            style={{ backgroundColor: fill }}
-            className="absolute top-full left-1/2 -mt-1 -ml-1 size-2 rotate-45"
-          />
+          <span style={{ backgroundColor: fill }} className="absolute top-full left-1/2 -mt-1 -ml-1 size-2 rotate-45" />
         </Link>
       ))}
     </div>
