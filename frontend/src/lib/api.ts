@@ -1,8 +1,8 @@
 // API 접근의 단일 진입점: fetch 래퍼, 목업 모드, 시연 시각(demoAt), 공통 에러 형식.
 // 조회는 SWR 키(= at·필터를 포함한 상대 API URL)로, 쓰기는 아래 함수로 호출한다.
 
-import { useSyncExternalStore } from "react";
-import useSWR from "swr";
+import { useCallback, useSyncExternalStore } from "react";
+import useSWR, { useSWRConfig } from "swr";
 import { toKstMinuteIso } from "@/lib/time";
 import type {
   BuildingsResponse,
@@ -158,8 +158,8 @@ export function useDemoAt(): DemoAt {
 
 type Query = Record<string, string | number | boolean | undefined>;
 
-function buildKey(path: string, query: Query, at: DemoAt, sendAt: boolean): string | null {
-  if (at.status === "loading" || at.status === "invalid") return null;
+function buildKey(path: string, query: Query | null, at: DemoAt, sendAt: boolean): string | null {
+  if (query === null || at.status === "loading" || at.status === "invalid") return null;
   const params = new URLSearchParams();
   for (const [name, value] of Object.entries(query)) {
     if (value !== undefined) params.set(name, String(value));
@@ -169,17 +169,41 @@ function buildKey(path: string, query: Query, at: DemoAt, sendAt: boolean): stri
   return search ? `${path}?${search}` : path;
 }
 
-function useApi<T>(path: string, query: Query = {}, sendAt = true) {
+function useApi<T>(path: string, query: Query | null = {}, sendAt = true) {
   const at = useDemoAt();
   return useSWR<T, ApiError>(buildKey(path, query, at, sendAt), fetcher<T>);
+}
+
+const DATA_KEY = /^\/api\/(buildings|rooms|meetups)/;
+
+function isDataKey(key: unknown) {
+  return typeof key === "string" && DATA_KEY.test(key);
+}
+
+/**
+ * 생성·참여·나가기·취소 직후와 409에 호출한다. buildings·rooms·meetups의 모든 쿼리를 재조회하고,
+ * 화면에 떠 있는 조회 중 새로 실패한 것이 있으면 false를 돌려준다. 안 떠 있는 쿼리는 다음 mount에 조회된다.
+ */
+export function useRevalidateData() {
+  const { mutate, cache } = useSWRConfig();
+  return useCallback(async () => {
+    const keys = [...cache.keys()].filter(isDataKey);
+    const errorsBefore = new Map(keys.map((key) => [key, cache.get(key)?.error]));
+    await mutate(isDataKey);
+    return keys.every((key) => {
+      const error = cache.get(key)?.error;
+      return !error || error === errorsBefore.get(key);
+    });
+  }, [mutate, cache]);
 }
 
 export function useBuildings() {
   return useApi<BuildingsResponse>("/api/buildings");
 }
 
-export function useRooms(query: RoomsQuery = {}) {
-  return useApi<RoomsResponse>("/api/rooms", { ...query });
+/** null이면 조회하지 않는다. */
+export function useRooms(query: RoomsQuery | null = {}) {
+  return useApi<RoomsResponse>("/api/rooms", query && { ...query });
 }
 
 export function useRoom(roomId: string) {

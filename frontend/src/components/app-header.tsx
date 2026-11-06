@@ -7,7 +7,8 @@ import { DemoAtBadge } from "@/components/demo-at";
 import { Badge } from "@/components/ui/badge";
 import { USE_MOCK } from "@/lib/api";
 
-const MOCK_BADGE_CLASS = "bg-amber-100 text-amber-900";
+const MOCK_BADGE_CLASS = "bg-mock text-mock-foreground";
+const LINK_CLASS = "rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function mockLabel(pathname: string) {
   if (pathname.startsWith("/buildings")) return "MOCK · 예시 강의실";
@@ -23,14 +24,19 @@ function MockBadge() {
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="mx-auto flex min-h-14 w-full max-w-5xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2">
-        <Link
-          href="/"
-          className="rounded-sm text-lg font-bold outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
+    <header className="border-b bg-background sm:sticky sm:top-0 sm:z-40">
+      <div className="mx-auto flex min-h-14 w-full max-w-5xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2">
+        <Link href="/" className={`text-lg font-bold ${LINK_CLASS}`}>
           빈강
         </Link>
+        <nav aria-label="주요 메뉴" className="flex items-center gap-3 text-sm font-medium">
+          <Link href="/" className={LINK_CLASS}>
+            지도
+          </Link>
+          <Link href="/meetups" className={LINK_CLASS}>
+            모임
+          </Link>
+        </nav>
         {USE_MOCK && (
           <Suspense fallback={<Badge className={MOCK_BADGE_CLASS}>MOCK</Badge>}>
             <MockBadge />

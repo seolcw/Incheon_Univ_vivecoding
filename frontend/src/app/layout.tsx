@@ -21,6 +21,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
             <DemoAtGate>{children}</DemoAtGate>
           </main>
+          <footer className="mx-auto w-full max-w-5xl px-4 pb-6 text-sm text-muted-foreground">
+            시간표와 데모 모임은 가상 시연 데이터예요.
+          </footer>
           <NicknameDialog />
           <Suspense fallback={null}>
             <DemoAtSync />
