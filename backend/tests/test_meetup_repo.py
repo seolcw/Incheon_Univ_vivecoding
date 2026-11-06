@@ -4,6 +4,7 @@ from copy import deepcopy
 import os
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 import meetup_repo
 from meetup_repo import MemoryMeetupRepo, MeetupRecord
@@ -54,6 +55,6 @@ class MeetupRepoTests(unittest.TestCase):
         self.assertEqual(len(repo.list_open()), 3)
 
     def test_firestore_does_not_silently_return_memory(self):
-        with patch.dict(os.environ, {"STORAGE": "firestore"}):
-            with self.assertRaises(NotImplementedError):
+        with patch.dict(os.environ, {"STORAGE": "firestore"}), patch.dict("sys.modules", {"db": SimpleNamespace(get_client=lambda: None)}), patch.object(meetup_repo, "_firestore_repo", None):
+            with self.assertRaises(RuntimeError):
                 meetup_repo.list_open()

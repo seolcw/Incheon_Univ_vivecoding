@@ -1,6 +1,8 @@
 r"""실행: .venv\Scripts\python -m uvicorn main:app --port 8000"""
 
 from datetime import datetime, timedelta, timezone
+from contextlib import asynccontextmanager
+import logging
 import os
 from typing import Literal
 
@@ -18,7 +20,10 @@ from errors import (
     unexpected_error_handler,
     validation_error_handler,
 )
-from meetup_repo import storage_mode
+from campus_gateway import Campus, CoreCampus, DemoCampus
+from meetup_repo import MeetupRepo, get_repo, storage_mode
+from routers.meetups import router as meetups_router
+from scripts.seed_demo import seed_memory
 
 KST = timezone(timedelta(hours=9), name="Asia/Seoul")
 VERSION = "0.1.0"
@@ -33,9 +38,35 @@ class HealthResponse(BaseModel):
     version: str
 
 
-def create_app() -> FastAPI:
-    application = FastAPI(title="빈강 API", version=VERSION)
+def create_app(*, repo: MeetupRepo | None = None, campus: Campus | None = None) -> FastAPI:
     selected_storage = storage_mode()
+    campus_source = os.environ.get("CAMPUS_SOURCE", "core").strip().lower()
+    if campus_source not in ("core", "demo"):
+        raise ValueError("CAMPUS_SOURCE는 core 또는 demo여야 합니다.")
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        if selected_storage == "memory":
+            if application.state.meetup_repo is None:
+                application.state.meetup_repo = get_repo()
+            seed_memory(application.state.meetup_repo)
+        if campus_source == "demo":
+            logging.getLogger(__name__).warning("CAMPUS_SOURCE=demo: 가상 301~304호만 사용하는 모임 API 시연입니다.")
+        yield
+
+    application = FastAPI(
+        title="빈강 API" + (" · 4개 방 데모" if campus_source == "demo" else ""),
+        version=VERSION, lifespan=lifespan,
+        description="가상 강의실 301~304호의 모임 API 데모. 실제 시간표/B 로직 연동 전입니다." if campus_source == "demo" else "빈강 API",
+    )
+    application.state.meetup_repo = repo
+    application.state.campus = campus if campus is not None else (DemoCampus() if campus_source == "demo" else CoreCampus())
+
+    @application.middleware("http")
+    async def campus_source_header(request, call_next):
+        response = await call_next(request)
+        response.headers["X-Campus-Source"] = campus_source
+        return response
     origins = [
         value.strip().rstrip("/")
         for value in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
@@ -48,11 +79,13 @@ def create_app() -> FastAPI:
         allow_credentials=False,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type"],
+        expose_headers=["X-Campus-Source"],
     )
     application.add_exception_handler(ApiError, api_error_handler)
     application.add_exception_handler(RequestValidationError, validation_error_handler)
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(Exception, unexpected_error_handler)
+    application.include_router(meetups_router)
 
     @application.get("/api/health", response_model=HealthResponse)
     def health() -> HealthResponse:

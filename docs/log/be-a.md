@@ -21,3 +21,25 @@
 - 엑셀 확인은 제공된 실행 환경의 openpyxl을 사용. 서버 의존성에는 엑셀 라이브러리를 추가하지 않음.
 - 참고: [FastAPI 공식 예외 처리 문서](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Render 공식 Blueprint 문서](https://render.com/docs/blueprint-spec). 외부 프로젝트 코드를 복사하지 않음.
 - 관련 이슈: [be-a 초기 작업 #2](https://github.com/seolcw/Incheon_Univ_vivecoding/issues/2). 로컬 `be-a` 브랜치에 커밋하며 원격 push·main 병합·배포는 하지 않음.
+
+## 11:44 수정 이슈 반영·메모리 모임 API·Firestore 연결 준비 (2026-11-06)
+
+- 바뀐 것: 최신 [이슈 #2](https://github.com/seolcw/Incheon_Univ_vivecoding/issues/2)(수정 시각 02:31:25 UTC), #1, origin/fe의 docs/pro/spec-v1.md·docs/scope-change.md를 읽고 모임 CRUD·참여, 앱 시작 memory 시드, .python-version=3.12와 Firestore 어댑터를 추가. README에 시연 명령·B 인계·Firestore 전환 절차 기록. 기존 첫 작업을 폐기하지 않고 확장함.
+- API 영향: 계약의 모임 6개 엔드포인트(목록·생성·단건·join·leave·cancel)를 구현. 생성 201, 나머지 200; 필드·방·시간·충돌 순서, 한국 시각·경계 접촉·정원·멱등·공통 에러 유지. at은 목록만 지원하고 join은 실제 시각으로 종료 검사. leave는 상세 엔드포인트 규칙을 따름(C1 미반영). 응답의 파생 필드는 저장하지 않음.
+- 확인 방법: 전체 unittest 16개 통과, pip check 통과. 메모리 동일 시간 동시 생성·마지막 자리 동시 참여 각각 한 요청만 성공 확인. 실제 Uvicorn 8000 포트에서 health200, demo-m1 조회, 생성201→참여200·1→2명, 재참여 멱등, 수업 충돌409, 정원409, 목록·leave·cancel·CORS·데모 헤더 확인 후 서버 종료. 라이브 검증 서버 실제 시각 2026-11-06T11:41:40+09:00. Firestore는 가짜 클라이언트 기반 단위 검사만 통과했으며 클라우드 접속 검증은 하지 않음.
+- 남은 문제: B의 core/seed/db.py와 rooms/chat 라우터가 아직 원격에 없음. 사용자도 미구현이라고 확인함. 실제 B 통합·Firestore 키/권한·서버 재시작 후 영속성·프론트/두 기기·Render 배포는 아직. Firestore 다중 인스턴스 동시 생성의 원자성은 미보장. 메모리 자동 이관은 없음. 실제 17:00 이후 고정 모임의 신규 참여는 거부됨.
+
+### B 미구현 상태에서의 명시적 데모
+
+- 사용자가 B 미구현을 고려해 먼저 구현하도록 지시하여 A 소유 campus_gateway.py에 CoreCampus와 DemoCampus 연결 경계를 둠. B 소유 core/, seed/, db.py, tests/test_core.py는 수정하지 않음.
+- CAMPUS_SOURCE=demo를 명시해야 v1 금요일 301~304호 4개 데이터를 사용. 정보대/eng 표시는 origin/fe의 scope-change.md에 맞춤. 실제 엑셀 또는 전체 가상 캠퍼스 시드의 구현으로 보고하지 않음. Swagger 제목·시작 경고·X-Campus-Source 응답 헤더로 표시하고 실패 시 자동 demo 전환은 하지 않음.
+- CAMPUS_SOURCE=core는 get_room/get_building/check_meetup_slot 고정 import 사용. 충돌 함수 인자는 room_id, KST timezone-aware datetime 시작/끝, 같은 방의 모든 open 모임(ISO 문자열)이다. B 인터페이스 테스트는 대역으로 확인했으며 B 코드 실행 성공이 아님.
+- STORAGE는 별도 설정이므로 memory/core 또는 firestore/demo 조합도 가능. B 데이터 준비와 DB 전환을 독립적으로 진행할 수 있음.
+
+### Firestore·시드·의존성
+
+- FirestoreMeetupRepo: meetups 컬렉션, 문서 id 분리, 원본 날짜와 members.joinedAt Timestamp 저장, +09:00 ISO 응답, 파생 필드 제외. 참여·나가기·취소는 단일 문서 트랜잭션. 생성은 프로세스 내 잠금이며 분산 잠금은 아님.
+- 실제 연결에는 B의 db.get_client(), 대회 전용 Firestore, 서비스 계정 권한/환경변수, STORAGE=firestore와 서버 재시작, 실제 생성·참여·재시작 후 조회 검증이 필요. 키를 코드·로그에 넣지 않음. Firestore 앱 시작 시 시드 덮어쓰기·삭제 없음.
+- memory는 앱 lifespan에서 요청과 같은 repo에 demo-m1을 추가. 별도 프로세스로 memory를 초기화하지 않음. Firestore의 scripts.seed_demo 초기화는 --reset-contest-meetups를 명시해야 하며 선택 프로젝트의 meetups 범위만 초기화한다. 삭제 명령은 이번 작업에서 실행하지 않음.
+- 새 패키지 설치 없음. 이미 설치된 google-cloud-firestore==2.34.1을 직접 사용하는 의존성으로 requirements.txt에 명시. 참고: [Firestore 트랜잭션 공식 문서](https://firebase.google.com/docs/firestore/manage-data/transactions), 설치 SDK의 메서드 시그니처 확인.
+- 커밋은 be-a에만 작성. 원격 push·이슈 체크박스 변경·main 병합·배포는 하지 않음.
