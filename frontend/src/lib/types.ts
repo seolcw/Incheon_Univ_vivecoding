@@ -85,6 +85,8 @@ export interface MeetupMember {
   userId: string;
   nickname: string;
   joinedAt: string;
+  /** 피부-눈-머리스타일-머리색-액세서리-모자. 없으면 이름 첫 글자로 표시한다. 옛 데이터에는 없을 수 있다. */
+  avatar?: string | null;
 }
 
 export interface Meetup {
@@ -201,11 +203,13 @@ export interface CreateMeetupRequest {
   maxMembers: number;
   userId: string;
   nickname: string;
+  avatar?: string | null;
 }
 
 export interface JoinMeetupRequest {
   userId: string;
   nickname: string;
+  avatar?: string | null;
 }
 
 export interface LeaveMeetupRequest {

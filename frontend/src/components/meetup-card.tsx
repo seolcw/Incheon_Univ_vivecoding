@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useRef, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
+import { AvatarFace } from "@/components/avatar-face";
 import { seatColor, seatInitial, SeatRow, type SeatMember } from "@/components/seat-row";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +16,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cancelMeetup, joinMeetup, leaveMeetup, USE_MOCK } from "@/lib/api";
+import { decodeAvatar } from "@/lib/avatar";
 import { categoryLabel, meetupPhase, meetupTimeRange } from "@/lib/meetup";
 import { flyToSeat } from "@/lib/motion";
 import { floorLabel } from "@/lib/room-status";
 import type { Meetup } from "@/lib/types";
 import { useWriteAction } from "@/lib/use-write-action";
-import { getUser, useUserId } from "@/lib/user";
+import { getUser, useAvatar, useUserId } from "@/lib/user";
 
 const NEED_NICKNAME_MESSAGE = "닉네임을 먼저 정해 주세요.";
 
@@ -54,6 +56,8 @@ export function MeetupCard({
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const seats = useRef<HTMLDivElement>(null);
   const joinButton = useRef<HTMLButtonElement>(null);
+  const flyingFace = useRef<HTMLSpanElement>(null);
+  const myFace = decodeAvatar(useAvatar());
 
   const isHost = userId === meetup.hostId;
   const isMember = meetup.members.some((member) => member.userId === userId);
@@ -84,7 +88,7 @@ export function MeetupCard({
     const land = flyToSeat(
       joinButton.current,
       seats.current?.querySelector('[data-open="true"]') ?? null,
-      seatInitial(user.nickname),
+      flyingFace.current?.firstElementChild ?? seatInitial(user.nickname),
       seatColor(user.userId),
     );
     const result = await run(() => joinMeetup(meetup.id, user), "모임에 참여했어요.");
@@ -159,6 +163,13 @@ export function MeetupCard({
       </div>
 
       {meetup.description && <p className="text-sm text-muted-foreground">{meetup.description}</p>}
+
+      {/* 참여할 때 날아가는 이름표의 원본 */}
+      {myFace && (
+        <span ref={flyingFace} hidden>
+          <AvatarFace parts={myFace} />
+        </span>
+      )}
 
       {isOpen && (
         <div className="flex flex-wrap items-center gap-2">
