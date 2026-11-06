@@ -1,4 +1,4 @@
-"""AI는 의도만 해석. 추천의 모든 방·시간·이유는 서버 데이터로 구성한다."""
+"""잡담은 AI 응답, 추천의 모든 방·시간·이유는 서버 데이터로 구성한다."""
 import re
 from datetime import datetime
 
@@ -41,9 +41,10 @@ def fallback_intent(message: str) -> SearchIntent:
     )
 
 
-def resolve_intent(message: str, previous: SearchIntent | None = None) -> tuple[SearchIntent, str]:
+def resolve_intent(message: str, previous: SearchIntent | None = None,
+                   history: list[dict] | None = None) -> tuple[SearchIntent, str]:
     rules = fallback_intent(message)
-    ai = interpret(message)
+    ai = interpret(message, history=history)
     intent = (ai or rules).model_copy()
     duration = explicit_minutes(message)
     floor_match = re.search(r"(\d+)\s*층", message)
@@ -52,8 +53,15 @@ def resolve_intent(message: str, previous: SearchIntent | None = None) -> tuple[
         any_floor(message) or floor_match is not None or
         (duration is not None and not re.search(r"강의실|공부|카공|스터디|자리|추천|사용할\s*곳", message))
     )
-    if rules.intent == "search":
+    # AI가 잡담으로 분류한 '공부하기 싫어/2시간 공부했어'를 키워드로 검색으로 바꾸지 않는다.
+    short_condition = bool(re.fullmatch(r"(?:그럼\s*)?(?:\d+\s*층(?:은|으로|에서)?|\d+\s*(?:시간|분))(?:[?!？.!\s]*)", message))
+    if rules.intent == "search" and (ai is None or ai.intent == "search" or any_floor(message) or short_condition):
         intent.intent = "search"
+    if intent.intent != "search":
+        # building/needsClarification은 검색에만 의미가 있다. 잡담을 막는 데 쓰지 않는다.
+        intent.building = "info"
+        intent.needsClarification = False
+        return intent, "llm" if ai else "fallback"
     if rules.building == "other":
         intent.building = "other"
     elif re.search(r"7\s*호관|정보대|정보기술", message):
@@ -79,14 +87,15 @@ def recommend(message: str, at: datetime, meetups: list[dict], *, has_location: 
     def answer(reply, rooms=None):
         return {"reply": reply[:200], "recommendations": rooms or [], "source": source}
 
+    if intent.intent != "search":
+        if source == "llm" and intent.reply.strip():
+            return answer(intent.reply.strip())
+        return {"reply": "지금 AI 연결이 잠깐 쉬고 있어. 조금 뒤에 다시 말 걸어 줘! 빈 강의실 조건 검색은 계속 할 수 있어. 🔥",
+                "recommendations": [], "source": "fallback"}
     if intent.building == "other":
         return answer("앗, 이번 탐험은 정보대(7호관)만 가능해! 다른 건물 정보는 아직 없어. 정보대에서 필요한 시간을 알려줘. 🔥")
     if intent.needsClarification:
         return answer("지금은 화면의 기준 시각부터, 정보대 1~5층을 검색할 수 있어. ‘지금부터 2시간’처럼 이용 시간을 알려줘. 층은 생략해도 돼! 🔥")
-    if intent.intent == "greeting":
-        return answer("안녕! 나는 횃불이야. 잠깐 쉬어도 괜찮아, 다시 시작하는 너를 응원할게! 🔥 정보대에서 공부할 곳이 필요하면 이용 시간을 알려줘. 층은 상관없어도 돼!")
-    if intent.intent != "search":
-        return answer("그건 아직 내가 확인할 수 없는 정보야. 지금은 정보대 빈 강의실 찾기를 도와줄 수 있어! ‘7호관에서 2시간 공부할 곳’처럼 물어봐 줘. 🔥")
 
     minutes = intent.minutes
     floor = intent.floor

@@ -27,7 +27,9 @@ def chat(body: ChatRequest, request: Request) -> dict:
     except (ValueError, OverflowError):
         raise _api_error("VALIDATION_ERROR", 400, "시각을 ISO 8601 형식으로 입력해 줘.") from None
     contexts = request.app.state.chat_contexts
-    resolved = resolve_intent(body.message, contexts.get(body.user_id, at.date().isoformat()))
-    result = recommend(body.message, at, list_open_meetups(), has_location=body.location is not None, resolved=resolved)
-    contexts.save(body.user_id, at.date().isoformat(), resolved[0])
+    date = at.date().isoformat()
+    resolved = resolve_intent(body.message, contexts.get(body.user_id, date), history=contexts.history(body.user_id, date))
+    meetups = list_open_meetups() if resolved[0].intent == "search" else []
+    result = recommend(body.message, at, meetups, has_location=body.location is not None, resolved=resolved)
+    contexts.save(body.user_id, date, resolved[0], body.message, result["reply"])
     return result

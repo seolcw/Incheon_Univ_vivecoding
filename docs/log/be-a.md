@@ -103,6 +103,12 @@
 - 8975973 push 및 Render bingang-api Deploy succeeded/Live 확인. 공개 웹에서 ‘7호관 2시간 이상 사용할곳’ → 실제 AI 추천, 전체 층120분 이상101/102/105호 표시. 이어 ‘층 상관 없어’ → 같은120분·전체 층 조건과 추천 카드 유지. 불필요한 층 질문 반복이 사라짐을 확인.
 - 프론트 변경·재배포 없이 기존 /api/chat을 사용. 검증 화면은 저장소 밖 torch-followup-fixed.jpg. 키·원문 운영 로그 추가 없음. 기존 통합 테스트1개의 fixture/import·스텁 기대값 문제는 위 기록대로 남아 있으며 챗봇 관련8개는 통과.
 
+## 13:56 횃불이 일반 대화와 짧은 문맥 연결
+- 바뀐 것: 사용자 요청으로 AI가 chat 의도의 실제 reply를 생성하도록 llm.py·recommend.py 변경. 잡담은 건물/시간 제약으로 막지 않으며 검색 답변은 계속 서버 데이터로 생성. chat_context.py에 최근3턴·10분 유효·최대256명 문맥 추가, routes_chat.py에서 일반 대화는 DB 조회 생략. frontend 대화/추천 라벨과 로딩 문구 개선. 새 패키지 없음.
+- API 영향: 요청·응답 필드 및200자 reply 제한 유지. 내부 모델에 chat/reply 추가, 최대출력350→700토큰. 한 요청당 호출1회와 기존 호출 한도 유지. 최근 대화 원문은 메모리와 OpenAI 문맥에만 사용하며 DB/로그 저장 없음. 관련 문서/프롬프트 갱신.
+- 확인 방법: 관련 백엔드27개(챗봇11개 포함), frontend build·lint 통과. 잡담에 잘못된 building=other/clarification=true가 있어도 생성 답변을 반환하고 DB 미조회, 최근3턴 전달·사용자 분리, 검색에 AI가 만든999호 문장을 쓰지 않음을 검증. 이전에 확인한 test_core의 통합 fixture/import·스텁 기대값 문제는 별개로 유지.
+- 남은 문제: 공개 실제 AI 배포 검증 진행 중. 문맥은 재시작/만료/날짜 변경 시 초기화되고 같은 userId의 탭끼리는 공유한다.
+
 ## 13:27 main 통합 배포 및 공개 모임 초기화
 - 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.

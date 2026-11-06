@@ -89,7 +89,7 @@ export function TorchChat() {
             {turn.response && <div className="space-y-2">
               <div className="rounded-xl rounded-tl-sm border border-sky-100 bg-white p-2.5 text-xs leading-relaxed text-slate-700">
                 <p>{turn.response.reply}</p>
-                <p className="mt-2 text-[10px] text-slate-500">{formatKstTime(turn.at)} 기준 · {turn.response.source === "llm" ? "AI 추천" : "기본 추천 · AI 연결 안 됨"}</p>
+                <p className="mt-2 text-[10px] text-slate-500">{turn.response.recommendations.length > 0 ? `${formatKstTime(turn.at)} 기준 · ` : ""}{turn.response.source === "llm" ? (turn.response.recommendations.length > 0 ? "AI 추천" : "AI 대화") : "기본 응답 · AI 연결 안 됨"}</p>
               </div>
               {turn.response.recommendations.map((room) => <Link key={room.roomId} prefetch={false} onClick={() => setOpen(false)} href={`/rooms/${encodeURIComponent(room.roomId)}?at=${encodeURIComponent(turn.at)}`}
                 className="group block rounded-xl border border-sky-100 bg-white p-3 shadow-sm transition hover:border-sky-400 focus-visible:outline-2 focus-visible:outline-sky-600">
@@ -100,7 +100,7 @@ export function TorchChat() {
             </div>}
             {turn.error && <p role="alert" className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-800">앗, 연결이 잠깐 어려워. {turn.error} 입력창에서 다시 보내 줘.</p>}
           </div>)}
-          {pending && <p role="status" className="text-sm text-sky-800">불꽃 켜고 시간표를 살펴보는 중이야…</p>}
+          {pending && <p role="status" className="text-sm text-sky-800">잠깐만, 생각을 정리하고 있어…</p>}
           <div ref={bottom} />
         </div>
         <form onSubmit={submit} className="shrink-0 space-y-1.5 border-t border-sky-100 bg-white p-2.5">

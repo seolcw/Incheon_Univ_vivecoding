@@ -115,3 +115,40 @@ class ChatTests(unittest.TestCase):
                 failed = client.post("/api/chat", json={**payload, **bad})
                 self.assertEqual(failed.status_code, 400)
                 self.assertEqual(failed.json()["error"]["code"], "VALIDATION_ERROR")
+
+    def test_small_talk_uses_generated_reply_without_building_gate_or_database(self):
+        generated = SearchIntent(intent="chat", building="other", minutes=120, floor=None,
+                                 needsClarification=True, facilitiesRequested=False, mood="calm",
+                                 reply="두 시간이나 집중했구나. 잠깐 물 마시고 쉬자! 지금은 수다 떨어도 좋아.")
+        with TestClient(create_app()) as client, patch("core.recommend.interpret", return_value=generated), patch("core.routes_chat.list_open_meetups") as database:
+            for message in ("야다", "2시간 공부했더니 피곤해", "도서관에서 졸았어", "강의실 말고 수다 떨자"):
+                response = client.post("/api/chat", json={"userId": "casual", "message": message, "location": None, "at": AT})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json(), {"reply": generated.reply, "recommendations": [], "source": "llm"})
+            database.assert_not_called()
+
+    def test_recent_conversation_reaches_ai_but_not_other_users(self):
+        generated = SearchIntent(intent="chat", building="info", minutes=15, floor=None,
+                                 needsClarification=False, facilitiesRequested=False, mood="bright", reply="어떤 과목이 제일 고민이야?")
+        with TestClient(create_app()) as client, patch("core.recommend.interpret", return_value=generated) as ai:
+            payload = {"userId": "talker", "location": None, "at": AT}
+            for message in ("공부가 막막해", "자료구조", "어디부터 할까", "응", "예시도 알려줘"):
+                self.assertEqual(client.post("/api/chat", json={**payload, "message": message}).status_code, 200)
+            history = ai.call_args.kwargs["history"]
+            self.assertEqual(len(history), 6)
+            self.assertEqual(history[-2]["content"], "응")
+            self.assertEqual(history[-1]["role"], "assistant")
+            client.post("/api/chat", json={**payload, "userId": "stranger", "message": "안녕"})
+            self.assertEqual(ai.call_args.kwargs["history"], [])
+
+    def test_ai_text_cannot_invent_room_availability_and_failure_is_labelled(self):
+        generated = SearchIntent(intent="search", building="info", minutes=120, floor=3,
+                                 needsClarification=False, facilitiesRequested=False, mood="bright",
+                                 reply="999호가 지금 비어 있으니 예약했어!")
+        with patch("core.recommend.interpret", return_value=generated):
+            result = recommend("3층 2시간 공부할 곳", parse_at(AT), [])
+            self.assertNotIn("999", result["reply"])
+            self.assertTrue(result["recommendations"])
+        failed = recommend("안녕", parse_at(AT), [])
+        self.assertEqual(failed["source"], "fallback")
+        self.assertIn("AI 연결", failed["reply"])
