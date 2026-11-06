@@ -110,7 +110,7 @@ function RoomCell({ cell, room, dimmed }: { cell: PlanCell; room: RoomStatus; di
     <Link
       href={`/rooms/${encodeURIComponent(room.id)}`}
       prefetch={false}
-      aria-label={`${room.name}, ${meta.label}, ${describeRoom(room)}`}
+      aria-label={`${room.name}, ${room.status === "class" ? "" : `${meta.label}, `}${describeRoom(room)}`}
       className={`group outline-none ${dimmed ? "opacity-25" : ""}`}
     >
       <rect

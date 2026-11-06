@@ -33,9 +33,9 @@ const GENERIC_CLASS_TITLE = "수업";
 export function describeRoom(room: RoomStatus): string {
   switch (room.status) {
     case "class":
-      // 상태는 배지가 보여 준다. 실제 시간표에는 과목명이 없어 제목이 "수업"으로 오면 종료 시각만 쓴다.
+      // 실제 시간표에는 과목명이 없어 제목이 "수업"으로 온다. 그때는 "수업 중, 14:45 종료"로 쓴다.
       return [
-        room.currentTitle !== GENERIC_CLASS_TITLE && room.currentTitle,
+        room.currentTitle && room.currentTitle !== GENERIC_CLASS_TITLE ? `${room.currentTitle} 수업 중` : "수업 중",
         room.classEndsAt && `${formatKstTime(room.classEndsAt)} 종료`,
       ]
         .filter(Boolean)
