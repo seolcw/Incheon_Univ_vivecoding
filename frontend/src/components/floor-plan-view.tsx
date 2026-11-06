@@ -231,7 +231,7 @@ export function FloorPlanView({
         <div
           role="group"
           aria-label={`${plan.floor}층 강의실 배치`}
-          className="plan-canvas mx-auto w-full min-w-[760px] md:min-w-0 xl:max-w-[calc((100dvh-10rem)*1.1325)]"
+          className="plan-canvas mx-auto w-full min-w-[760px] md:min-w-0 xl:max-w-[calc((100dvh-12rem)*1.1325)]"
         >
           {leaving && leaving.plan !== plan && (
             <PlanLayer

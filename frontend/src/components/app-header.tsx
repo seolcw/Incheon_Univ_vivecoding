@@ -87,7 +87,7 @@ function Nav() {
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-40 bg-background/95">
+    <header className="sticky top-0 z-40 bg-background">
       <div className="mx-auto flex min-h-14 w-full max-w-[1240px] flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2 sm:min-h-16 sm:px-6">
         <Link
           href="/"

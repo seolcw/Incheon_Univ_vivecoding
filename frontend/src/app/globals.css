@@ -818,6 +818,9 @@
 .seat[data-next="true"] {
   animation: seat-wait 1.5s ease-in-out infinite alternate;
 }
+.seat[data-pop="true"] {
+  animation: seat-arrive 0.42s var(--ease-pop) backwards;
+}
 .seat-ring {
   position: absolute;
   inset: -4px;

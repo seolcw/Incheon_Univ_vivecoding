@@ -65,9 +65,12 @@ export function burstFrom(element: Element | null, options?: BurstOptions) {
   burst(rect.left + rect.width / 2, rect.top + rect.height / 2, options);
 }
 
-/** 내 이름표가 버튼에서 빈자리로 날아간다. 도착하면 resolve한다. */
+/**
+ * 내 이름표가 버튼에서 빈자리로 날아가 앉는다. 돌려준 함수를 부르면 이름표를 치운다.
+ * 저장이 끝나면 진짜 자리가 그 위치에 나타나므로, 저장을 기다리는 동안 이름표가 자리를 맡아 둔다.
+ */
 export function flyToSeat(from: Element | null, to: Element | null, label: string, background: string) {
-  if (!from || !to || prefersReducedMotion()) return Promise.resolve();
+  if (!from || !to || prefersReducedMotion()) return () => {};
   const start = from.getBoundingClientRect();
   const end = to.getBoundingClientRect();
   const size = end.width;
@@ -78,7 +81,7 @@ export function flyToSeat(from: Element | null, to: Element | null, label: strin
   document.body.append(token);
   const fromX = start.left + start.width / 2 - size / 2;
   const fromY = start.top + start.height / 2 - size / 2;
-  const animation = token.animate(
+  token.animate(
     [
       { transform: `translate(${fromX}px, ${fromY}px) scale(0.7)`, opacity: 0.9 },
       {
@@ -90,8 +93,5 @@ export function flyToSeat(from: Element | null, to: Element | null, label: strin
     ],
     { duration: 460, easing: "cubic-bezier(0.3, 0.1, 0.2, 1)", fill: "forwards" },
   );
-  return animation.finished.then(
-    () => token.remove(),
-    () => token.remove(),
-  );
+  return () => token.remove();
 }

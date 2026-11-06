@@ -18,13 +18,14 @@ export function useWriteAction() {
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
 
-  async function run<T>(action: () => Promise<T>, successMessage: string): Promise<WriteResult<T>> {
+  /** successMessage가 null이면 토스트 대신 호출한 화면이 직접 성공을 보여 준다. */
+  async function run<T>(action: () => Promise<T>, successMessage: string | null): Promise<WriteResult<T>> {
     if (inFlight.current) return { ok: false, message: "처리 중이에요. 잠시만 기다려 주세요." };
     inFlight.current = true;
     setPending(true);
     try {
       const data = await action();
-      toast.success(successMessage);
+      if (successMessage) toast.success(successMessage);
       // 저장은 이미 끝났다. 재조회가 실패해도 POST를 다시 보내지 않는다.
       const refreshed = await revalidate();
       if (!refreshed) toast.warning("저장됐지만 화면 갱신에 실패했어요.");
