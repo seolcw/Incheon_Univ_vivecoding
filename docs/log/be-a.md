@@ -43,3 +43,10 @@
 - memory는 앱 lifespan에서 요청과 같은 repo에 demo-m1을 추가. 별도 프로세스로 memory를 초기화하지 않음. Firestore의 scripts.seed_demo 초기화는 --reset-contest-meetups를 명시해야 하며 선택 프로젝트의 meetups 범위만 초기화한다. 삭제 명령은 이번 작업에서 실행하지 않음.
 - 새 패키지 설치 없음. 이미 설치된 google-cloud-firestore==2.34.1을 직접 사용하는 의존성으로 requirements.txt에 명시. 참고: [Firestore 트랜잭션 공식 문서](https://firebase.google.com/docs/firestore/manage-data/transactions), 설치 SDK의 메서드 시그니처 확인.
 - 커밋은 be-a에만 작성. 원격 push·이슈 체크박스 변경·main 병합·배포는 하지 않음.
+
+## 11:55 로컬 인증 파일 환경변수 로더 (별도 요청)
+
+- 바뀐 것: `backend/scripts/load_firebase_env.ps1` 추가. 저장소 밖 원본 JSON을 UTF-8로 읽어 현재 PowerShell 프로세스의 FIREBASE_SERVICE_ACCOUNT_JSON과 STORAGE=firestore 설정. 원본 파일·모임 구현은 변경하지 않고 키 내용·파싱 오류 원문은 출력하지 않음. 실행: backend에서 `& .\scripts\load_firebase_env.ps1 -ServiceAccountPath 'C:\개인폴더\firebase-key.json'`. 같은 창에서 후속 서버 명령을 실행해야 하며 새 창에는 전달되지 않음.
+- API 영향: 없음. origin/be-b의 c581fbe에서 db.get_client()가 같은 환경변수를 읽는 것을 확인. 원격 정보만 갱신했고 B 코드를 작업 브랜치에 병합하지 않음. availability.py는 원격에 아직 없어 CAMPUS_SOURCE=core의 생성 검증은 미준비.
+- 확인 방법: PowerShell 문법 검사와 가짜 인증 데이터로 환경변수 설정, 원본 해시 불변, 잘못된 JSON 오류의 입력값 비노출, 저장소 내부 인증 파일 경로 거부 확인. 테스트 파일 제거, 테스트 환경변수 복원. 새 의존성 없음.
+- 남은 문제: 실제 원본 JSON 경로 미제공으로 실키 로드·Firestore 접속은 실행하지 않음. B db.py 통합 및 실제 읽기·쓰기 확인 필요. Firestore 연결과 B의 시간 충돌 로직 준비는 별개임.
