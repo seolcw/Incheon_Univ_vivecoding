@@ -206,7 +206,7 @@ class CoreTests(unittest.TestCase):
         self.repo.list_open.assert_called_with(room_id="row_303")
         self.assertTrue(routes_rooms.router.routes)
         self.assertTrue(routes_chat.router.routes)
-        self.assertEqual(self.client.post("/api/chat").status_code, 200)  # Fixed stub only.
+        self.assertEqual(self.client.post("/api/chat").status_code, 400)  # 실제 챗봇은 계약의 필수 본문을 검증한다.
 
     def test_memory_client_needs_no_credentials(self):
         with patch.dict(os.environ, {"STORAGE": "memory", "FIREBASE_SERVICE_ACCOUNT_JSON": "not-json"}, clear=True):

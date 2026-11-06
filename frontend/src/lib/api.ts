@@ -5,6 +5,8 @@ import { useCallback, useSyncExternalStore } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { toKstMinuteIso } from "@/lib/time";
 import type {
+  ChatRequest,
+  ChatResponse,
   BuildingsResponse,
   CancelMeetupRequest,
   CreateMeetupRequest,
@@ -240,4 +242,8 @@ export function leaveMeetup(meetupId: string, body: LeaveMeetupRequest) {
 
 export function cancelMeetup(meetupId: string, body: CancelMeetupRequest) {
   return post<MeetupResponse>(`/api/meetups/${encodeURIComponent(meetupId)}/cancel`, body);
+}
+
+export function askTorch(body: ChatRequest) {
+  return post<ChatResponse>("/api/chat", body);
 }

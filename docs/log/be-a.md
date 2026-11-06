@@ -71,3 +71,9 @@
 - API 영향: 계약 변경 없음. 공개 프론트 https://bingang-web.onrender.com, 공개 API https://bingang-api.onrender.com. CORS는 해당 프론트와 localhost:3000 허용. Vercel 계정 연결 대신 기존 로그인 Render 계정의 무료 Node 서비스로 프론트 배포.
 - 확인 방법: Render 양쪽 Deploy succeeded(60322fe). 공개 API로 실제 Firestore 생성201·별도 userId 참여200·재조회·중복 참여·26개 강의실 확인, 검증 문서만 정리. 공개 Origin POST preflight200 확인. Chrome 주최자가 11/10 14:10–16:10 eng-302 모임 생성 → 독립 인앱 브라우저 닉네임 참가자가 목록에서 참여 → 양쪽 2/4명 자동 반영 확인. UI 검증 모임은 주최자 버튼으로 취소하고 빈 강의실 복귀 확인. 별도 물리 PC 두 대는 직접 검증하지 않음.
 - 남은 문제: 무료 인스턴스 유휴 후 첫 요청 지연. public Git 연결은 수동 배포가 필요함. 채팅과 계정 인증은 범위 밖. 검증 화면은 저장소 밖 로컬 시각화 폴더에 보관. 기존 로컬 demo 서버는 종료했으며 공개 서버는 유지.
+
+## 13:05 횃불ON 정보대 추천 구현
+- 바뀐 것: 사용자 요청으로 frontend 대화창과 backend/core 추천·LLM 구현을 be-a에서 통합. 공식 횃불이 PNG 3종과 반응 상태, 질문 예시, 추천 카드 상세 이동. 기존 /api/chat 스텁을 실제 시간표·모임 조회로 교체하고 main.py에 등록. 문서 docs/torch-on.md와 프롬프트 로그 추가.
+- API 영향: 외부 요청·응답 계약 유지. 내부 모델 출력은 SearchIntent 구조로 제한하고 서버가 사실/최종 페르소나 문장을 조합. 기존 stub의 무본문200 테스트는 실제 입력 검증400 기대값으로 변경. GPS 실내 거리·시설 추측은 하지 않음.
+- 확인 방법: 전체 unittest37개, frontend build·ESLint 통과. 로컬 횃불이 클릭→3층120분 조건→304/317/302 카드 확인. 대화창 위치 오류를 브라우저에서 발견해 수정 후 재빌드. 키 없는 로컬은 source=fallback을 명시.
+- 남은 문제: Render에 사용자가 OPENAI_API_KEY 등록 완료. 실제 OpenAI·공개 웹 배포 검증 진행 중. 단일 프로세스 하루200회 기본 제한은 재시작 때 초기화됨. 새 패키지 없음. 학교 공식 챗봇이 아닌 대회 시연으로 표시.
