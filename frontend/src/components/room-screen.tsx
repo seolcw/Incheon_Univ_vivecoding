@@ -8,7 +8,7 @@ import { RoomTimeline } from "@/components/room-timeline";
 import { ErrorState, LoadingState, NotFoundState, RefreshFailedNote } from "@/components/states";
 import { Badge } from "@/components/ui/badge";
 import { useRoom } from "@/lib/api";
-import { describeRoom, roomFacts, ROOM_STATUS_META } from "@/lib/room-status";
+import { describeRoom, floorLabel, roomFacts, ROOM_STATUS_META } from "@/lib/room-status";
 
 export function RoomScreen() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -29,7 +29,7 @@ export function RoomScreen() {
           prefetch={false}
           className="w-fit rounded-sm text-sm text-muted-foreground underline underline-offset-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          {room.buildingName} {room.floor}층으로
+          {room.buildingName} {floorLabel(room.floor)}으로
         </Link>
         <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold">
           {room.buildingName} {room.name}

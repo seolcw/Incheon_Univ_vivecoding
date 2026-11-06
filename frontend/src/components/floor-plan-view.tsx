@@ -139,7 +139,7 @@ export function FloorPlanView({
   rooms: RoomStatus[];
   matchingRoomIds?: Set<string>;
 }) {
-  const roomsById = new Map(rooms.map((room) => [room.id, room]));
+  const roomsByName = new Map(rooms.filter((room) => room.floor === plan.floor).map((room) => [room.name, room]));
   return (
     <div
       tabIndex={0}
@@ -154,9 +154,9 @@ export function FloorPlanView({
         className="mx-auto w-full max-w-3xl min-w-[620px]"
       >
         {plan.cells.map((cell) => {
-          const key = cell.roomId ?? `${cell.kind}-${cell.x}-${cell.y}`;
+          const key = cell.roomName ?? `${cell.kind}-${cell.x}-${cell.y}`;
           if (cell.kind !== "room") return <StructureCell key={key} cell={cell} />;
-          const room = cell.roomId ? roomsById.get(cell.roomId) : undefined;
+          const room = cell.roomName ? roomsByName.get(cell.roomName) : undefined;
           if (!room) return <UnavailableRoomCell key={key} cell={cell} />;
           return (
             <RoomCell key={key} cell={cell} room={room} dimmed={matchingRoomIds ? !matchingRoomIds.has(room.id) : false} />
