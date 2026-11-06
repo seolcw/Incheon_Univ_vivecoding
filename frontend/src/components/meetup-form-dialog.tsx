@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { MeetupTimeSlider } from "@/components/meetup-time-slider";
 import { MockWriteNotice } from "@/components/mock-write-notice";
 import { SeatRow } from "@/components/seat-row";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,7 @@ function SlotPreview({ start, end, schedule }: { start: string; end: string; sch
   const minutes = valid ? clockToMinutes(end) - clockToMinutes(start) : 0;
   return (
     <div aria-hidden={!valid} className="flex flex-col gap-1.5">
-      <div className="relative h-2.5 overflow-hidden rounded-full bg-muted">
+      <div className="relative mx-3 h-2.5 overflow-hidden rounded-full bg-muted">
         {blocks.map((block) => (
           <span
             key={block.from}
@@ -97,7 +98,7 @@ function SlotPreview({ start, end, schedule }: { start: string; end: string; sch
         ))}
         {valid && (
           <span
-            className="absolute inset-y-0 rounded-full bg-status-meetup transition-[left,width] duration-300 ease-fluid"
+            className="absolute inset-y-0 rounded-full bg-status-meetup transition-[left,width] duration-100 ease-out"
             style={{ left: `${dayPosition(start)}%`, width: `${dayPosition(end) - dayPosition(start)}%` }}
           />
         )}
@@ -361,7 +362,19 @@ function MeetupForm({ fixedRoom, at, onDone }: { fixedRoom?: RoomStatus; at: str
           </label>
           <Input id="meetup-end" type="time" value={end} onChange={(event) => setEnd(event.target.value)} />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2 grid gap-3">
+          <MeetupTimeSlider
+            start={start}
+            end={end}
+            open={OPEN_CLOCK}
+            close={CLOSE_CLOCK}
+            minLength={MIN_LENGTH}
+            maxLength={MAX_LENGTH}
+            onChange={(nextStart, nextEnd) => {
+              setStart(nextStart);
+              setEnd(nextEnd);
+            }}
+          />
           <SlotPreview start={start} end={end} schedule={schedule} />
         </div>
       </div>
