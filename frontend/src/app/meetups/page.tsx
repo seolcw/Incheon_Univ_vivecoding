@@ -27,7 +27,14 @@ export default function MeetupsPage() {
   // 데이터가 있을 때만 계산한다. 프리렌더 중에 현재 시각을 읽지 않기 위해서다.
   const at = currentAtIso(demoAt);
   const meetups = data.meetups;
-  const present = meetups.filter((meetup) => isLive(meetup, at)).flatMap((meetup) => meetup.members);
+  const present = [
+    ...new Map(
+      meetups
+        .filter((meetup) => isLive(meetup, at))
+        .flatMap((meetup) => meetup.members)
+        .map((member) => [member.userId, member]),
+    ).values(),
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -57,7 +64,7 @@ export default function MeetupsPage() {
           <ul aria-hidden="true" className="flex items-center pl-2">
             {present.slice(0, FACE_LIMIT).map((member, index) => (
               <li
-                key={`${member.userId}-${index}`}
+                key={member.userId}
                 className="seat rise -ml-2 ring-2 ring-status-meetup"
                 style={
                   {

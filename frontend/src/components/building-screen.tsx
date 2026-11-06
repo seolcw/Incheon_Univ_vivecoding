@@ -2,7 +2,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { FloorElevator } from "@/components/floor-elevator";
 import { FloorPlanView } from "@/components/floor-plan-view";
@@ -69,7 +69,6 @@ export function BuildingScreen() {
   const { buildingId } = useParams<{ buildingId: string }>();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
   const [minFreeMinutes, setMinFreeMinutes] = useState(0);
   const [inspected, setInspected] = useState<RoomStatus | null>(null);
 
@@ -94,7 +93,8 @@ export function BuildingScreen() {
     setInspected(null);
     const params = new URLSearchParams(searchParams.toString());
     params.set("floor", String(nextFloor));
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    // 서버를 거치지 않아 도면이 누르는 즉시 움직인다. Next는 이 호출을 useSearchParams에 반영한다.
+    window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
   }
 
   const plan = getFloorPlan(buildingId, floor);
@@ -121,7 +121,7 @@ export function BuildingScreen() {
         <div>
           <h1 className="flex items-baseline gap-2.5 font-bold xl:flex-col xl:gap-0">
             <span className="text-2xl tracking-[-0.03em]">{building.name}</span>
-            <span className="flex items-baseline text-[clamp(3.5rem,14vw,6rem)] leading-none font-extrabold tracking-[-0.045em]">
+            <span className="flex items-baseline text-[clamp(3.5rem,14vw,6rem)] leading-none font-extrabold tracking-[-0.04em] xl:-ml-1">
               {floor > 0 ? <RollingNumber value={floor} /> : floorLabel(floor).replace("층", "")}
               <span className="text-[0.46em] font-bold tracking-[-0.03em]">층</span>
             </span>

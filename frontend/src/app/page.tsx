@@ -44,7 +44,11 @@ export default function HomePage() {
           {emptyTotal > 0 ? (
             <>
               <span className="block text-xl tracking-[-0.03em] sm:text-2xl">지금 수업 없는 강의실</span>
-              <span className="mt-1 flex items-baseline gap-1 text-[clamp(5rem,20vw,7.5rem)] leading-none font-extrabold tracking-[-0.045em] text-status-empty">
+              <span
+                className={`mt-1 flex items-baseline gap-1 text-[clamp(5rem,20vw,7.5rem)] leading-none font-extrabold tracking-[-0.04em] text-status-empty ${
+                  String(emptyTotal).startsWith("1") ? "-ml-[0.1em]" : ""
+                }`}
+              >
                 <RollingNumber value={emptyTotal} />
                 <span className="text-[0.42em] font-bold tracking-[-0.03em]">개</span>
               </span>

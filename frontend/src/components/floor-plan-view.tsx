@@ -93,7 +93,7 @@ function RoomCell({
       onFocus={() => onInspect(room)}
       onBlur={() => onInspect(null)}
     >
-      <span className="plan-face">
+      <span className="plan-face" data-occupied={room.status === "meetup" || undefined}>
         <span className="plan-number">{cell.label}</span>
         {roomy && <span className="plan-caption">{planCaption(room)}</span>}
         {roomy && room.freeMinutes > 0 && (

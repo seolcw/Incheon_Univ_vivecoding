@@ -61,6 +61,11 @@ export function FloorElevator({
               value={item}
               checked={active}
               tabIndex={active ? 0 : -1}
+              aria-label={
+                summary
+                  ? `${floorLabel(item)}, 수업 없는 강의실 ${summary.emptyCount}/${summary.totalCount}개`
+                  : floorLabel(item)
+              }
               onChange={() => onSelect(item)}
               className="sr-only"
             />
@@ -73,10 +78,9 @@ export function FloorElevator({
             {summary && (
               <span
                 className={`text-xs tabular-nums transition-colors duration-300 xl:ml-auto ${
-                  active ? "text-background/75" : "text-muted-foreground"
+                  active ? "text-background/80" : "text-muted-foreground"
                 }`}
               >
-                <span className="sr-only">수업 없는 강의실 </span>
                 {summary.emptyCount}/{summary.totalCount}
               </span>
             )}

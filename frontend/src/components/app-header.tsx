@@ -69,7 +69,7 @@ function NavSlots({ activeSlot }: { activeSlot: number }) {
           key={item.href}
           href={item.href}
           aria-current={activeSlot === index ? "page" : undefined}
-          className={`relative rounded-full px-4 py-1.5 text-center transition-colors duration-200 ${FOCUS_CLASS} ${
+          className={`relative rounded-full px-3 py-1.5 text-center sm:px-4 transition-colors duration-200 ${FOCUS_CLASS} ${
             activeSlot === index ? "text-foreground" : "text-muted-foreground hover:text-foreground"
           }`}
         >
