@@ -80,6 +80,24 @@ class MeetupApiTests(unittest.TestCase):
                 self.assert_error(self.client.post("/api/meetups", json=payload(**change)), status, code)
         self.assertEqual(len(self.repo.list_all()), 1)
 
+    def test_avatar_create_join_validation_and_legacy_member(self):
+        avatar = "12-0-99-1-2-3"
+        meetup = self.create(avatar=avatar)
+        path = f"/api/meetups/{meetup['id']}"
+        self.assertEqual(meetup["members"][0]["avatar"], avatar)
+        joined = self.client.post(path + "/join", json={"userId": "guest", "nickname": "참가", "avatar": "1-2-3-4-5-6"})
+        self.assertEqual(joined.status_code, 200)
+        self.assertEqual(joined.json()["meetup"]["members"][1]["avatar"], "1-2-3-4-5-6")
+        self.assertEqual(self.repo.get(meetup["id"])["members"][0]["avatar"], avatar)
+        for bad in ("", "1-2-3", "100-1-2-3-4-5", "1-2-3-4-5-6\n", " 1-2-3-4-5-6", 123, True):
+            self.assert_error(self.client.post("/api/meetups", json=payload(avatar=bad)), 400, "VALIDATION_ERROR")
+            self.assert_error(self.client.post(path + "/join", json={"userId": "bad", "nickname": "오류", "avatar": bad}), 400, "VALIDATION_ERROR")
+        self.assertEqual(self.client.post(path + "/join", json={"userId": "null", "nickname": "없음", "avatar": None}).status_code, 200)
+        legacy = self.repo.get(meetup["id"])
+        legacy["members"][0].pop("avatar")
+        self.repo.save(legacy)
+        self.assertIsNone(self.client.get(path).json()["meetup"]["members"][0]["avatar"])
+
     def test_class_conflict_all_meetups_and_touching_boundaries(self):
         self.assert_error(self.client.post("/api/meetups", json=payload(roomId="eng-302")), 409, "ROOM_OCCUPIED")
         self.assert_error(self.client.post("/api/meetups", json=payload(startAt="2026-11-06T14:14:00+09:00", endAt="2026-11-06T14:29:00+09:00")), 409, "ROOM_OCCUPIED")

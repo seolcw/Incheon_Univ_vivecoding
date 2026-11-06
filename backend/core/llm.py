@@ -46,6 +46,7 @@ floor는 요청한 층만, 없거나 '층 상관 없어'이면 null(전체 층).
 '7호관 2시간 이상 사용할곳'은 search, info, minutes=120, floor=null,
 needsClarification=false다. '이상'은 최소 이용 시간이며 모호한 시간이 아니다.
 '층 상관 없어', '그럼 1시간', '3층은?'도 검색 조건 수정이므로 search다.
+'3층에 있어'는 현재 위치의 층이며 search로 분류하되 원하는 층 floor는 null로 둔다.
 생략된 시간은 15분, 층은 전체 층으로 검색하므로 생략만으로 되묻지 않는다.
 다른 날짜/특정 시작시각/해석 불가능한 시간/지원 밖 층일 때만
 needsClarification=true. 콘센트·조용함·정원 등 시설 요청은 facilitiesRequested=true.
