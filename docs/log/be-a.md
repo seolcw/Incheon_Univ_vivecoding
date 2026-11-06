@@ -50,3 +50,12 @@
 - API 영향: 없음. origin/be-b의 c581fbe에서 db.get_client()가 같은 환경변수를 읽는 것을 확인. 원격 정보만 갱신했고 B 코드를 작업 브랜치에 병합하지 않음. availability.py는 원격에 아직 없어 CAMPUS_SOURCE=core의 생성 검증은 미준비.
 - 확인 방법: PowerShell 문법 검사와 가짜 인증 데이터로 환경변수 설정, 원본 해시 불변, 잘못된 JSON 오류의 입력값 비노출, 저장소 내부 인증 파일 경로 거부 확인. 테스트 파일 제거, 테스트 환경변수 복원. 새 의존성 없음.
 - 남은 문제: 실제 원본 JSON 경로 미제공으로 실키 로드·Firestore 접속은 실행하지 않음. B db.py 통합 및 실제 읽기·쓰기 확인 필요. Firestore 연결과 B의 시간 충돌 로직 준비는 별개임.
+
+## 12:00 B db.py 통합·실제 Firestore 영속성 검증 (2026-11-06)
+
+- 바뀐 것: be-a의 cb82b2c와 작업 트리 상태 확인 후 원격 갱신. origin/be-b 최신 c581fbe의 backend/db.py만 원본 그대로 통합. B 전체 병합·시드·라우터 스텁 등록은 하지 않음. 기존 main.py·meetup_repo.py·인증 로더 변경 없음. scripts/verify_firestore.py와 실제 실행 안내 추가.
+- API 영향: 경로·필드·상태·동작 계약 변경 없음. STORAGE=firestore, CAMPUS_SOURCE=demo로 검증. db.get_client()가 기존 FirestoreMeetupRepo에 실제 클라이언트를 제공함. health200은 연결 성공 판단 근거로 사용하지 않음.
+- 확인 방법: 통합 후 기존 unittest 16개 통과, 검증 스크립트 문법 검사 통과. 사용자 지정 저장소 밖 원본 JSON을 로더로 읽되 키·SDK 예외 원문·프로젝트 식별자는 출력하지 않음. 실제 Firestore 문서 읽기 성공 → 모임 생성201 및 직접 DB 읽기로 Timestamp 저장 확인 → 참여200 및 DB members 1→2 확인 → 서버 종료·재기동 → GET 단건200과 참여 응답 전체 일치 확인. 이번 검증용 고유 hostId의 모임만 삭제하고 삭제 결과 확인. 검증 프로세스 종료 및 인증 환경변수 제거, 원본 파일 SHA256 불변 확인(해시값·키값 미기록).
+- 남은 문제: B의 core/availability.py는 원격에 아직 없어 CAMPUS_SOURCE=core 전환은 하지 않음. 실제 시간표/지도/프론트·두 기기·Render 배포는 별도 통합 단계. Firestore 검증용 모임은 정리했으며 운영 데모 모임을 초기화하거나 메모리 기록을 이관하지 않음.
+
+실제 검증은 기존 모임과 섞이지 않도록 다음 날 eng-304 21:00–21:30에 생성한 임시 모임으로 수행했다. 데이터 정리는 해당 실행이 만든 기록에만 한정하며 전체 meetups 초기화 스크립트는 실행하지 않았다. 실제 검증 중 키가 들어 있는 원본 파일 내용은 도구 출력·채팅·Git·로그에 남기지 않았다. 새 패키지 설치 없음. 변경은 be-a 로컬 커밋이며 push·main 병합·배포는 하지 않음.

@@ -1,6 +1,6 @@
 # be-a 모임 API — 창원
 
-수정된 [이슈 #2](https://github.com/seolcw/Incheon_Univ_vivecoding/issues/2)의 SPEC v1 작업계획과 기존 API 계약을 기준으로 서버·모임 생성/조회/참여/나가기/취소를 구현했다. 메모리 모드는 실제 HTTP 검증을 마쳤고 Firestore 어댑터는 연결 준비가 됐다. B 코드·실제 Firestore·프론트 화면 연동은 아직이며 프론트 화면은 성민 담당이다.
+수정된 [이슈 #2](https://github.com/seolcw/Incheon_Univ_vivecoding/issues/2)의 SPEC v1 작업계획과 기존 API 계약을 기준으로 서버·모임 생성/조회/참여/나가기/취소를 구현했다. 메모리와 실제 Firestore 모두 생성·참여를 검증했고 Firestore는 서버 재시작 후 모임·참여 인원 유지도 확인했다(2026-11-06). B의 충돌 검사·강의실 조회와 프론트 화면 연동은 아직이며 프론트 화면은 성민 담당이다.
 
 ## 실행 (Windows PowerShell, Python 3.12)
 
@@ -33,7 +33,7 @@ Invoke-RestMethod http://localhost:8000/api/health
 ## 환경변수와 저장소
 
 - `.env.example`은 변수 이름 목록이다. `.env`를 자동 로드하지 않으므로 PowerShell `$env:...` 또는 배포 환경변수로 설정한다.
-- 현재는 `STORAGE=memory`로 실행한다. 생략 시 기본값은 `firestore`다. Firestore 어댑터는 구현했지만 B의 db.py와 실제 키가 아직 필요하다. 연결 실패를 빈 목록이나 메모리로 자동 대체하지 않는다.
+- 위 명령은 키 없는 `STORAGE=memory` 실행이다. 실제 Firestore 실행은 아래 인증 로더 절차를 따른다. 생략 시 기본값은 firestore이며 B의 db.py는 c581fbe 원본으로 통합했다. 연결 실패를 빈 목록이나 메모리로 자동 대체하지 않는다.
 - `CAMPUS_SOURCE=demo`는 B 구현 전 가상 301~304호 4개만 쓰는 모임 API 시연이다. 실제 엑셀·전체 캠퍼스·강의실 조회 API가 아니다. Swagger 제목, 시작 로그, `X-Campus-Source: demo` 헤더로 표시한다. 생략 시 기본값은 `core`이며 B의 로더와 충돌 검사 코드를 사용한다.
 - `/api/health`는 서버 생존과 선택한 저장 모드만 표시한다. Firestore 접속 검사가 아니다.
 - `CORS_ORIGINS`는 쉼표로 구분한다. 생략 시 `http://localhost:3000`. 배포 시 실제 프론트 Origin을 추가한다.
@@ -48,7 +48,7 @@ be-b는 `from meetup_repo import list_open`을 사용한다. `roomName`, `buildi
 
 상위 작업 폴더의 `2026-2학기_강의실_시간표_정리.xlsx`를 읽어 확인했다. `강의실 시간표` 시트에 헤더를 제외한 2,834행이 있으며 열은 `건물 이름`, `건물 호관`, `강의실 호실`, `시간`, `요일`이다. 예를 들어 인문대학 15호관 119호의 시간 셀 하나에 `(18:00~19:15)(19:25~20:40)`처럼 여러 구간이 들어 있다.
 
-수정 이슈는 v1 가상 데이터를 기준으로 하므로 위 엑셀은 아직 런타임에 연결하지 않았다. B의 정적 데이터 변환 결과에 있는 rooms[].id를 모임 roomId로 그대로 받는다. 이번 임시 데모는 `origin/fe`의 `docs/scope-change.md`에 맞춰 건물명 정보대·id eng를 유지하고 v1의 금요일 301~304호 수업만 사용한다. 전체 시드나 월–금 상태 계산이 완성된 것은 아니다. B 소유 core/, seed/, db.py는 만들거나 수정하지 않았다.
+수정 이슈는 v1 가상 데이터를 기준으로 하므로 위 엑셀은 아직 런타임에 연결하지 않았다. B의 정적 데이터 변환 결과에 있는 rooms[].id를 모임 roomId로 그대로 받는다. 이번 임시 데모는 `origin/fe`의 `docs/scope-change.md`에 맞춰 건물명 정보대·id eng를 유지하고 v1의 금요일 301~304호 수업만 사용한다. 전체 시드나 월–금 상태 계산이 완성된 것은 아니다. B의 db.py만 원본 그대로 통합했고 core/, seed/는 가져오지 않았다.
 
 ## 배포 설정과 참고
 
@@ -95,10 +95,29 @@ $joined.meetup | Select-Object id,title,memberCount,maxMembers,isFull
 ## B와 Firestore 연결 순서
 
 1. 강산이 `core.seed_loader.get_room/get_building`, `core.availability.check_meetup_slot`을 제공하면 CAMPUS_SOURCE=core로 전환한다. A는 충돌 함수에 timezone-aware KST datetime 2개와 해당 방의 모든 open 모임(ISO 문자열)을 전달한다. B 강의실/건물 라우터의 main.py 등록은 코드 인계 후 별도로 진행한다.
-2. Firestore 프로젝트·대회 전용 DB·서비스 계정 권한과 B의 db.get_client()가 준비되면 서버 환경변수 FIREBASE_SERVICE_ACCOUNT_JSON을 설정하고 STORAGE=firestore로 바꿔 재시작한다. 캠퍼스 코드가 없어도 CAMPUS_SOURCE=demo를 유지해 저장 연결만 먼저 확인할 수 있다.
+2. B의 db.get_client() 통합과 실제 Firestore 검증은 완료했다. 실행할 PowerShell 창에서 아래 로더로 FIREBASE_SERVICE_ACCOUNT_JSON과 STORAGE=firestore를 설정한다. 캠퍼스 충돌 코드는 아직 없으므로 CAMPUS_SOURCE=demo를 유지한다.
 3. 생성→참여→서버 재시작→모임 유지까지 실제 DB에서 확인한다. 저장소 어댑터는 Timestamp 저장과 ISO +09:00 응답을 처리한다. 프론트 API 계약은 바뀌지 않는다.
 
-**DB 생성만으로 자동 연결되지는 않는다. 실제 Firestore 접속은 아직 검증하지 않았다.** 메모리 모임도 자동 이관하지 않는다. Firestore 앱 시작 시 기존 데이터를 지우거나 데모 데이터를 덮어쓰지 않는다.
+**실제 Firestore 읽기·쓰기·모임 생성/참여·서버 재시작 후 유지까지 검증했다.** 메모리 모임은 자동 이관하지 않는다. Firestore 앱 시작 시 기존 데이터를 지우거나 데모 데이터를 덮어쓰지 않는다.
+
+backend 폴더에서 실행하며 원본 인증 파일은 저장소 밖에 둔다. 아래 예시 경로를 본인 파일 경로로 바꾼다. 키 내용은 출력하지 않는다.
+
+```powershell
+& .\scripts\load_firebase_env.ps1 -ServiceAccountPath 'C:\개인폴더\firebase-key.json'
+$env:CAMPUS_SOURCE = 'demo'
+$env:CORS_ORIGINS = 'http://localhost:3000'
+.\.venv\Scripts\python -m uvicorn main:app --host 127.0.0.1 --port 8000 --workers 1
+```
+
+로더의 환경변수는 현재 창과 그 자식 프로세스에만 적용된다. 새 창을 열면 로더를 다시 실행한다. 이 검증 작업에서 사용한 임시 프로세스는 종료했고 사용자 터미널에 인증 환경변수를 영구 저장하지 않았다.
+
+서버를 아직 실행하지 않은 상태에서 동일한 실제 접속 검증을 재실행하려면, 로더와 CAMPUS_SOURCE 설정 후 아래를 실행한다. 기본 8000 포트는 비어 있어야 하며 다른 포트를 쓰려면 `--port 8001`을 지정한다.
+
+```powershell
+.\.venv\Scripts\python -m scripts.verify_firestore
+```
+
+이 명령은 실제 Firestore를 읽고 다음 날 21:00–21:30의 eng-304에 임시 모임을 만든다. 참여 인원이 2명인지 확인하고 서버를 재시작해 재조회한 뒤, 이번 실행의 고유 hostId로 생성한 모임만 삭제한다. 기존 모임이나 demo-m1은 수정하지 않는다. 같은 방·시간에 기존 모임이 있으면 409로 실패하며 기존 모임을 지우지 않는다. 키·예외 원문은 출력하지 않는다.
 
 ## 데모 시드와 검증 범위
 
@@ -110,6 +129,6 @@ Firestore 초기화 명령은 아래와 같다. **선택된 프로젝트의 meet
 .\.venv\Scripts\python -m scripts.seed_demo --reset-contest-meetups
 ```
 
-16개 테스트와 pip check 통과. 실제 8000 포트에서 생성201→참여200·1→2명, 재참여·정원409·수업충돌409·목록·나가기·취소·CORS를 확인했다. B는 인터페이스 테스트 대역, Firestore는 가짜 클라이언트로 어댑터·시간 변환만 검사했으므로 실제 연결 성공과 구분한다.
+16개 테스트와 pip check 통과. 메모리 모드의 실제 8000 포트에서 생성201→참여200·1→2명, 재참여·정원409·수업충돌409·목록·나가기·취소·CORS를 확인했다. 2026-11-06에는 B의 원본 db.py 통합 후 같은 16개 테스트를 다시 통과했고, 실제 Firestore 읽기·모임 생성201·Timestamp 저장·참여200(1→2명)·서버 재시작 후 유지·검증 데이터 정리를 완료했다. 인증 JSON 원본 해시 불변도 확인했다. B의 실제 충돌 검사는 여전히 미연결이며 CAMPUS_SOURCE=demo를 유지한다.
 
 추가 참고: [Firestore 공식 트랜잭션 문서](https://firebase.google.com/docs/firestore/manage-data/transactions)를 meetup_repo.py의 저장소 인터페이스에 맞춰 적용했다. 공식 예제의 완성 코드를 복사하지 않았다.
