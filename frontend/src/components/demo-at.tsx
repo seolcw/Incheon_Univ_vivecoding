@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { clearDemoAt, syncDemoAt, useDemoAt } from "@/lib/api";
 import { formatKstTime } from "@/lib/time";
@@ -32,11 +31,20 @@ export function DemoAtBadge() {
   const clear = useClearDemoAt();
   if (demoAt.status !== "on") return null;
   return (
-    <div className="flex items-center gap-1">
-      <Badge variant="outline" className="tabular-nums">
-        시연 시각 {formatKstTime(demoAt.at)}
-      </Badge>
-      <Button variant="ghost" size="sm" aria-label="시연 시각 해제" onClick={clear}>
+    <div className="reveal flex items-center gap-0.5 rounded-full bg-foreground py-0.5 pr-0.5 pl-3 text-background">
+      <span className="flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap tabular-nums">
+        <span aria-hidden="true" className="live-dot text-status-empty" />
+        <span>
+          시연<span className="max-sm:sr-only"> 시각</span> {formatKstTime(demoAt.at)}
+        </span>
+      </span>
+      <Button
+        variant="ghost"
+        size="xs"
+        className="rounded-full text-background/80 hover:bg-background/15 hover:text-background"
+        aria-label="시연 시각 해제"
+        onClick={clear}
+      >
         해제
       </Button>
     </div>
@@ -49,8 +57,8 @@ export function DemoAtGate({ children }: { children: ReactNode }) {
   const clear = useClearDemoAt();
   if (demoAt.status !== "invalid") return children;
   return (
-    <div role="alert" className="flex flex-col items-start gap-3">
-      <p>시연 시각 형식을 확인해 주세요.</p>
+    <div role="alert" className="rise flex flex-col items-start gap-4 rounded-[28px] bg-muted p-6 sm:p-8">
+      <p className="text-2xl font-bold tracking-[-0.028em]">시연 시각 형식을 확인해 주세요.</p>
       <Button variant="outline" aria-label="시연 시각 해제" onClick={clear}>
         해제
       </Button>

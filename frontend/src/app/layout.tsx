@@ -1,3 +1,4 @@
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
@@ -19,10 +20,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <Providers>
           <AppHeader />
-          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
+          <main className="mx-auto w-full max-w-[1240px] flex-1 px-3 py-4 sm:px-6 sm:py-6">
             <DemoAtGate>{children}</DemoAtGate>
           </main>
-          <footer className="mx-auto w-full max-w-5xl px-4 pb-6 text-sm text-muted-foreground">
+          <footer className="mx-auto w-full max-w-[1240px] px-4 pt-4 pb-28 text-[0.8125rem] leading-relaxed text-muted-foreground sm:px-6 sm:pb-10">
             실제 시간표 기준이에요. 휴강·보강은 반영되지 않고, 시간표에 없는 시간이라고 문이 열려 있다는 뜻은 아니에요.
           </footer>
           <NicknameDialog />

@@ -28,6 +28,15 @@
   --color-plan-text: var(--plan-text);
   --color-mock: var(--mock);
   --color-mock-foreground: var(--mock-foreground);
+  --color-stage: var(--stage);
+  --color-stage-raised: var(--stage-raised);
+  --color-stage-corridor: var(--stage-corridor);
+  --color-stage-structure: var(--stage-structure);
+  --color-stage-line: var(--stage-line);
+  --color-stage-text: var(--stage-text);
+  --ease-fluid: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-settle: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%, 1.001);
+  --ease-pop: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -68,13 +77,13 @@
 
 :root {
   /* 제품 디자인 토큰. 글꼴과 상태·지도 색은 여기서만 고친다. */
-  --app-font: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --app-font: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
 
   /* 강의실 상태: 비어있음 초록 / 모임 중 파랑 / 수업 중 빨강 / 운영 종료 회색 */
-  --status-empty: oklch(0.527 0.154 150.069);
-  --status-meetup: oklch(0.488 0.243 264.376);
-  --status-class: oklch(0.505 0.213 27.518);
-  --status-closed: oklch(0.551 0.027 264.364);
+  --status-empty: oklch(0.53 0.16 152);
+  --status-meetup: oklch(0.51 0.225 263);
+  --status-class: oklch(0.55 0.215 27);
+  --status-closed: oklch(0.5 0.02 264);
   --status-foreground: oklch(1 0 0);
 
   /* 건물 빈 비율: 2/3 이상 초록 / 1/3 이상 노랑 / 나머지 빨강 / 운영 종료 회색 */
@@ -95,30 +104,47 @@
   --mock: oklch(0.962 0.059 95.617);
   --mock-foreground: oklch(0.414 0.112 45.904);
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* 층 도면 무대. 지도가 읽는 plan 토큰과 분리한다. */
+  --stage: oklch(0.2 0.008 265);
+  --stage-raised: oklch(0.285 0.009 265);
+  --stage-corridor: oklch(0.245 0.008 265);
+  --stage-structure: oklch(0.325 0.01 265);
+  --stage-line: oklch(0.4 0.012 265);
+  --stage-text: oklch(0.8 0.008 265);
+
+  /* 사람 자리 색. 상태 색과 겹치지 않는 연한 색만 쓴다. */
+  --seat-1: oklch(0.9 0.09 95);
+  --seat-2: oklch(0.88 0.07 20);
+  --seat-3: oklch(0.88 0.08 310);
+  --seat-4: oklch(0.9 0.08 195);
+  --seat-5: oklch(0.89 0.09 60);
+  --seat-6: oklch(0.88 0.07 280);
+  --seat-foreground: oklch(0.26 0.02 265);
+
+  --background: oklch(0.993 0.0015 95);
+  --foreground: oklch(0.2 0.008 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.2 0.008 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.2 0.008 265);
+  --primary: oklch(0.2 0.008 265);
+  --primary-foreground: oklch(0.993 0.0015 95);
+  --secondary: oklch(0.96 0.003 95);
+  --secondary-foreground: oklch(0.2 0.008 265);
+  --muted: oklch(0.962 0.003 95);
+  --muted-foreground: oklch(0.47 0.01 265);
+  --accent: oklch(0.962 0.003 95);
+  --accent-foreground: oklch(0.2 0.008 265);
+  --destructive: oklch(0.55 0.215 27);
+  --border: oklch(0.925 0.003 95);
+  --input: oklch(0.885 0.004 95);
+  --ring: oklch(0.2 0.008 265);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.875rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -167,10 +193,847 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    scrollbar-color: oklch(0.8 0.005 95) transparent;
+    scrollbar-width: thin;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    letter-spacing: -0.006em;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    caret-color: var(--status-meetup);
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.028em;
+    text-wrap: balance;
+  }
+  ::selection {
+    background: oklch(0.51 0.225 263 / 0.18);
+  }
+  input,
+  textarea {
+    font-variant-numeric: tabular-nums;
+  }
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+  }
+  :focus-visible {
+    outline-offset: 2px;
+  }
+}
+
+/* ---------- 움직임 ---------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@keyframes stage-forward {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes stage-back {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+@keyframes lamp-on {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  28% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  42% {
+    opacity: 0.35;
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes plate-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes floor-arrive-up {
+  from {
+    opacity: 0;
+    transform: translateY(-7%);
+  }
+}
+@keyframes floor-arrive-down {
+  from {
+    opacity: 0;
+    transform: translateY(7%);
+  }
+}
+@keyframes floor-leave-up {
+  to {
+    opacity: 0;
+    transform: translateY(7%);
+  }
+}
+@keyframes floor-leave-down {
+  to {
+    opacity: 0;
+    transform: translateY(-7%);
+  }
+}
+@keyframes room-ping {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+@keyframes presence {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes live-dot {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+@keyframes return-ring {
+  0% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes window-lit {
+  0%,
+  100% {
+    opacity: 0.16;
+  }
+  35%,
+  65% {
+    opacity: 1;
+  }
+}
+@keyframes breathe {
+  from {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes bar-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes countdown {
+  to {
+    transform: scaleX(0);
+  }
+}
+@keyframes seat-arrive {
+  0% {
+    transform: scale(0.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes seat-ring {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  70% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes seat-wait {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes seat-wave {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes tray-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.975);
+  }
+}
+@keyframes tray-out {
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+}
+@keyframes flood-in {
+  from {
+    transform: scale(0);
+  }
+}
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+  }
+}
+
+.route-stage[data-enter="forward"] {
+  animation: stage-forward 0.48s var(--ease-fluid) backwards;
+}
+.route-stage[data-enter="back"] {
+  animation: stage-back 0.42s var(--ease-fluid) backwards;
+}
+.rise {
+  animation: rise 0.62s var(--ease-fluid) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+.reveal {
+  animation: reveal 0.42s ease-out backwards;
+}
+.press {
+  transition: transform 0.28s var(--ease-settle);
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* ---------- 숫자 ---------- */
+
+.roll {
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+  vertical-align: baseline;
+}
+.roll-col {
+  display: inline-block;
+  height: 1.08em;
+  overflow: hidden;
+  line-height: 1.08;
+}
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.95s var(--ease-fluid);
+}
+.roll-strip > span {
+  display: block;
+  height: 1.08em;
+  line-height: 1.08;
+  text-align: center;
+}
+/* 굴러가는 숫자판의 글자는 CSS로 그려 본문 텍스트에 섞이지 않게 한다. */
+.roll-strip > span::before {
+  content: attr(data-digit);
+}
+
+/* ---------- 상태 색 ---------- */
+
+[data-status="empty"] {
+  --cell: var(--status-empty);
+}
+[data-status="meetup"] {
+  --cell: var(--status-meetup);
+}
+[data-status="class"] {
+  --cell: var(--status-class);
+}
+[data-status="closed"] {
+  --cell: var(--status-closed);
+}
+
+/* ---------- 층 도면 ---------- */
+
+.plan-canvas {
+  container-type: inline-size;
+  position: relative;
+  aspect-ratio: 940 / 830;
+}
+.plan-layer {
+  position: absolute;
+  inset: 0;
+}
+.plan-layer[data-phase="arrive"][data-dir="up"] {
+  animation: floor-arrive-up 0.46s var(--ease-fluid) backwards;
+}
+.plan-layer[data-phase="arrive"][data-dir="down"] {
+  animation: floor-arrive-down 0.46s var(--ease-fluid) backwards;
+}
+.plan-layer[data-phase="leave"] {
+  pointer-events: none;
+}
+.plan-layer[data-phase="leave"][data-dir="up"] {
+  animation: floor-leave-up 0.26s ease-in forwards;
+}
+.plan-layer[data-phase="leave"][data-dir="down"] {
+  animation: floor-leave-down 0.26s ease-in forwards;
+}
+/* 가운데 빈 마당에 지금 층을 크게 깐다 */
+.plan-ghost {
+  position: absolute;
+  top: 37%;
+  left: 50%;
+  color: var(--stage-corridor);
+  font-size: 38cqw;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  user-select: none;
+}
+/* 폰은 도면을 옆으로 밀어 보므로 숫자가 잘린다. */
+@media (max-width: 47.99rem) {
+  .plan-ghost {
+    display: none;
+  }
+}
+.plan-cell {
+  position: absolute;
+  padding: 0.17cqw;
+}
+.plan-plate {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: clamp(3px, 0.55cqw, 7px);
+  color: var(--stage-text);
+  font-size: max(9.5px, 1.25cqw);
+  font-weight: 500;
+  animation: plate-in 0.3s ease-out backwards;
+}
+.plan-plate[data-kind="corridor"] {
+  border-radius: 0;
+  background: var(--stage-corridor);
+}
+.plan-plate[data-kind="stairs"] {
+  background: repeating-linear-gradient(0deg, var(--stage-structure) 0 3px, var(--stage-raised) 3px 7px);
+}
+.plan-plate[data-kind="toilet"],
+.plan-plate[data-kind="elevator"] {
+  background: var(--stage-structure);
+}
+.plan-plate[data-kind="unnumbered"],
+.plan-plate[data-kind="unavailable"] {
+  background: var(--stage-raised);
+}
+.plan-plate[data-kind="unavailable"] {
+  font-size: max(11px, 1.55cqw);
+  font-weight: 600;
+}
+.plan-plate[data-kind="outline"] {
+  border: 1px dashed var(--stage-line);
+  font-size: max(11px, 1.4cqw);
+}
+.plan-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: var(--stage-text);
+  font-size: max(12px, 1.5cqw);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.plan-room {
+  position: absolute;
+  display: block;
+  padding: 0.17cqw;
+  outline: none;
+  color: var(--status-foreground);
+}
+.plan-room:hover,
+.plan-room:focus-visible {
+  z-index: 3;
+}
+.plan-face {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  overflow: hidden;
+  border-radius: clamp(4px, 0.75cqw, 10px);
+  background-color: var(--cell);
+  line-height: 1.12;
+  transition:
+    transform 0.34s var(--ease-settle),
+    opacity 0.32s ease-out,
+    background-color 0.5s ease-out,
+    box-shadow 0.24s ease-out;
+  animation: lamp-on 0.62s linear backwards;
+  animation-delay: var(--lamp, 0ms);
+}
+.plan-layer[data-phase="leave"] .plan-face,
+.plan-layer[data-phase="leave"] .plan-plate {
+  animation: none;
+}
+.plan-number {
+  font-size: max(12px, 1.72cqw);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+.plan-caption {
+  font-size: max(10px, 1.3cqw);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.plan-fuel {
+  position: absolute;
+  right: 12%;
+  bottom: clamp(3px, 0.5cqw, 7px);
+  left: 12%;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: oklch(1 0 0 / 0.28);
+}
+.plan-fuel > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: oklch(1 0 0 / 0.95);
+  transform: scaleX(var(--fuel, 0));
+  transform-origin: left;
+  transition: transform 0.6s var(--ease-fluid);
+  animation: bar-grow 0.9s var(--ease-fluid) backwards;
+  animation-delay: calc(var(--lamp, 0ms) + 240ms);
+}
+.plan-ping {
+  position: absolute;
+  inset: 0.17cqw;
+  border: 2px solid var(--cell);
+  border-radius: clamp(4px, 0.75cqw, 10px);
+  pointer-events: none;
+  animation: room-ping 2.4s ease-out infinite;
+  animation-delay: calc(var(--lamp, 0ms) + 500ms);
+}
+/* 사람이 있는 방은 안쪽 빛이 천천히 숨쉰다 */
+.plan-face[data-occupied="true"]::after {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(closest-side, oklch(1 0 0 / 0.26), oklch(1 0 0 / 0));
+  content: "";
+  pointer-events: none;
+  animation: presence 2.4s ease-in-out infinite;
+}
+.plan-return {
+  position: absolute;
+  inset: 0.17cqw;
+  border: 3px solid oklch(1 0 0);
+  border-radius: clamp(4px, 0.75cqw, 10px);
+  opacity: 0;
+  pointer-events: none;
+  animation: return-ring 0.9s var(--ease-fluid) 0.34s backwards;
+}
+@media (hover: hover) {
+  .plan-room:hover .plan-face {
+    box-shadow: 0 8px 18px -6px oklch(0 0 0 / 0.65);
+    transform: translateY(-1px) scale(1.035);
+  }
+}
+.plan-room:active .plan-face {
+  transform: scale(0.97);
+}
+.plan-room:focus-visible .plan-face {
+  outline: 2px solid oklch(1 0 0);
+  outline-offset: 1px;
+}
+.plan-room[data-dim="true"] .plan-face {
+  opacity: 0.17;
+  transform: scale(0.95);
+}
+.plan-room[data-dim="true"] .plan-ping {
+  display: none;
+}
+
+/* 층 버튼: 엘리베이터 칸이 움직인다 */
+.lift-cab {
+  transform: translateX(calc(var(--lift, 0) * 100%));
+  transition: transform 0.5s var(--ease-settle);
+}
+@media (min-width: 80rem) {
+  .lift-cab {
+    transform: translateY(calc(var(--lift, 0) * -100%));
+  }
+}
+
+/* 공용 미끄럼 표시 */
+.slide-chip {
+  transform: translateX(calc(var(--slot, 0) * 100%));
+  transition: transform 0.46s var(--ease-settle);
+}
+
+/* ---------- 최소 여유 시간 슬라이더 ---------- */
+
+.free-slider {
+  --p: 0;
+  touch-action: pan-y;
+}
+.free-slider-fill {
+  transform: scaleX(var(--p));
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-settle);
+}
+/* 폭 0인 받침만 옮긴다. 레일 폭은 컨테이너 단위로 읽어 페이지 폭을 늘리지 않는다. */
+.free-slider-rail {
+  transform: translateX(calc(var(--p) * 100cqw));
+  transition: transform 0.5s var(--ease-settle);
+}
+.free-slider-thumb {
+  transition:
+    transform 0.34s var(--ease-pop),
+    box-shadow 0.2s ease-out;
+}
+.free-slider[data-dragging="true"] .free-slider-fill,
+.free-slider[data-dragging="true"] .free-slider-rail {
+  transition: transform 0.07s linear;
+}
+.free-slider[data-dragging="true"] .free-slider-thumb {
+  box-shadow: 0 10px 22px -8px oklch(0.2 0.008 265 / 0.55);
+  transform: scale(1.16, 0.92);
+}
+.free-slider-tick {
+  transition:
+    transform 0.34s var(--ease-pop),
+    background-color 0.2s ease-out;
+}
+.free-slider-tick[data-passed="true"] {
+  background-color: oklch(1 0 0 / 0.75);
+}
+.free-slider-tick[data-current="true"] {
+  transform: scaleY(1.5);
+}
+
+/* ---------- 강의실 카드 ---------- */
+
+.room-card {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  transition:
+    color 0.24s ease-out,
+    transform 0.32s var(--ease-settle);
+}
+.room-card::before {
+  position: absolute;
+  top: -55%;
+  right: -35%;
+  z-index: -1;
+  aspect-ratio: 1;
+  width: 170%;
+  border-radius: 50%;
+  background: var(--cell);
+  content: "";
+  transform: scale(0);
+  transition: transform 0.56s var(--ease-fluid);
+}
+@media (hover: hover) {
+  .room-card:hover {
+    color: var(--status-foreground);
+  }
+  .room-card:hover::before {
+    transform: scale(1);
+  }
+  .room-card:hover [data-card-muted] {
+    color: oklch(1 0 0 / 0.86);
+  }
+  .room-card:hover [data-card-chip] {
+    background: oklch(1 0 0 / 0.2);
+    color: var(--status-foreground);
+  }
+  .room-card:hover [data-card-dot] {
+    background: var(--status-foreground);
+  }
+}
+.room-card:active {
+  transform: scale(0.985);
+}
+
+/* ---------- 자리 ---------- */
+
+.seat {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  line-height: 1;
+}
+.seat[data-open="true"] {
+  border: 1.5px dashed currentColor;
+  opacity: 0.45;
+}
+.seat[data-next="true"] {
+  animation: seat-wait 1.5s ease-in-out infinite alternate;
+}
+.seat[data-pop="true"] {
+  animation: seat-arrive 0.42s var(--ease-pop) backwards;
+}
+.seat-ring {
+  position: absolute;
+  inset: -4px;
+  overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+  transform: rotate(-90deg);
+}
+.seat-ring circle {
+  fill: none;
+  stroke: var(--status-meetup);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  stroke-linecap: round;
+  stroke-width: 2.5;
+}
+[data-tone="hero"] .seat-ring circle {
+  stroke: oklch(1 0 0);
+}
+.seat[data-arriving="true"] {
+  animation: seat-arrive 0.62s var(--ease-pop) backwards;
+}
+.seat[data-arriving="true"] .seat-ring {
+  opacity: 1;
+}
+.seat[data-arriving="true"] .seat-ring circle {
+  animation: seat-ring 1s var(--ease-fluid) forwards;
+}
+.seat-row[data-full="true"] .seat {
+  animation: seat-wave 0.56s var(--ease-settle) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms + 480ms);
+}
+.live-dot {
+  position: relative;
+  display: inline-block;
+  height: 0.5rem;
+  width: 0.5rem;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+}
+.live-dot::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  animation: live-dot 2s ease-out infinite;
+}
+
+/* ---------- 색면 ---------- */
+
+.hero-surface {
+  background-color: var(--cell);
+  color: var(--status-foreground);
+  transition: background-color 0.7s ease-out;
+}
+.hero-light {
+  position: absolute;
+  top: -35%;
+  right: -12%;
+  z-index: -1;
+  aspect-ratio: 1;
+  width: min(760px, 110%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, oklch(1 0 0 / 0.2), oklch(1 0 0 / 0));
+  pointer-events: none;
+  animation: breathe 7s ease-in-out infinite alternate;
+}
+.ribbon-free {
+  transform-origin: left;
+  animation: bar-grow 1.1s var(--ease-fluid) 0.18s backwards;
+}
+.timeline-block {
+  transform-origin: top;
+  animation: bar-grow-y 0.7s var(--ease-fluid) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms + 120ms);
+}
+
+/* ---------- 불러오는 중 ---------- */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--muted);
+}
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.75), transparent);
+  content: "";
+  transform: translateX(-100%);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+.windows-loader span {
+  animation: window-lit 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+/* ---------- 트레이 ---------- */
+
+.tray[data-open] {
+  animation: tray-in 0.46s var(--ease-fluid) backwards;
+}
+.tray[data-closed] {
+  animation: tray-out 0.18s ease-in forwards;
+}
+.flood-disc {
+  position: absolute;
+  top: var(--y, 100%);
+  left: var(--x, 50%);
+  height: 1500px;
+  width: 1500px;
+  margin: -750px 0 0 -750px;
+  border-radius: 50%;
+  background: var(--status-meetup);
+  animation: flood-in 0.68s var(--ease-fluid) backwards;
+}
+.flood-check path {
+  stroke-dasharray: 1;
+  animation: check-draw 0.5s var(--ease-fluid) 0.3s backwards;
+}
+.flood-countdown {
+  transform-origin: left;
+  animation: countdown 3.2s linear forwards;
+}
+.nudge {
+  animation: nudge 0.34s ease-out;
+}
+
+/* ---------- 토스트 ---------- */
+
+.cn-toast [data-content]::after {
+  position: absolute;
+  right: 16px;
+  bottom: 6px;
+  left: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: oklch(1 0 0 / 0.4);
+  content: "";
+  transform-origin: left;
+  animation: countdown 4s linear forwards;
+}
+[data-sonner-toaster]:hover .cn-toast [data-content]::after {
+  animation-play-state: paused;
+}
+
+/* ---------- 움직임 줄이기 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-delay: 0ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .plan-ping,
+  .hero-light,
+  .plan-face[data-occupied="true"]::after {
+    animation: none;
+  }
+  .plan-face[data-occupied="true"]::after {
+    opacity: 0;
+  }
+  .flood-countdown,
+  .cn-toast [data-content]::after {
+    animation: none;
   }
 }
