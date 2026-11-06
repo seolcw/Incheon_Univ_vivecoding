@@ -25,7 +25,6 @@ export function BuildingLegend() {
       {Object.entries(BUILDING_LEVEL_META).map(([level, meta]) => (
         <LegendItem key={level} fillClass={meta.fillClass} label={meta.label} />
       ))}
-      <LegendItem fillClass="fill-plan-structure" label="준비 중" />
     </Legend>
   );
 }
