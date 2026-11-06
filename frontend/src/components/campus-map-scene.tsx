@@ -1,12 +1,14 @@
 "use client";
 
 import { Canvas, invalidate, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import * as THREE from "three";
 import {
   CAMPUS_BLOCKS,
+  CAMPUS_COURTS,
   CAMPUS_FIELD,
   CAMPUS_GROUND,
   CAMPUS_HEDGES,
@@ -26,12 +28,16 @@ const ROTATION = {
 };
 const DRAG_THRESHOLD_PX = 5;
 const DRAG_SPEED = 0.006;
+const CAMERA_FOV = 22;
 const CAMERA_DISTANCE = 306;
 const LABEL_GAP = 0.6;
 const LABEL_CARET_PX = 5;
+const LABEL_EDGE_PX = 6;
+const OUTLINE_PX = 2.5;
 
-const RIBBON = { offset: 0.56, ratio: 0.44, proud: 0.1 };
-const ROOF_INSET = 0.5;
+const RIBBON = { offset: 0.56, ratio: 0.36, proud: 0.08 };
+const ROOF_INSET = 0.34;
+const SELECTION_LABEL_ID = "selection";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -70,9 +76,31 @@ function createHourglass() {
 
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
 const UNIT_CYLINDER = new THREE.CylinderGeometry(0.5, 0.5, 1, 18);
-const UNIT_PLANE = new THREE.PlaneGeometry(1, 1);
 const UNIT_WEDGE = createWedge();
 const UNIT_HOURGLASS = createHourglass();
+
+/** 선택한 건물이 차지한 화면 영역을 스텐실에 표시한다. 색은 그리지 않는다. */
+const OUTLINE_MASK_MATERIAL = new THREE.MeshBasicMaterial({
+  colorWrite: false,
+  depthWrite: false,
+  depthFunc: THREE.LessEqualDepth,
+  stencilWrite: true,
+  stencilFunc: THREE.AlwaysStencilFunc,
+  stencilRef: 1,
+  stencilZPass: THREE.ReplaceStencilOp,
+});
+
+/** 건물보다 조금 큰 검은 도형을 표시 영역 밖에만 그려 바깥 윤곽선만 남긴다. */
+const OUTLINE_HULL_MATERIAL = new THREE.MeshBasicMaterial({
+  color: "#000000",
+  depthWrite: false,
+  stencilWrite: true,
+  stencilFunc: THREE.NotEqualStencilFunc,
+  stencilRef: 1,
+  stencilFail: THREE.KeepStencilOp,
+  stencilZFail: THREE.KeepStencilOp,
+  stencilZPass: THREE.KeepStencilOp,
+});
 
 // 씬 중심을 원점에 둔다.
 const toWorld = (x: number, z: number): [number, number] => [x - CAMPUS_GROUND.x, z - CAMPUS_GROUND.z];
@@ -102,8 +130,6 @@ function readFill(className: string): string {
 const mixColors = (from: string, to: string, amount: number) =>
   `#${new THREE.Color(from).lerp(new THREE.Color(to), amount).getHexString()}`;
 
-const darken = (color: string, amount: number) => `#${new THREE.Color(color).multiplyScalar(amount).getHexString()}`;
-
 function readPalette() {
   const ground = readFill("fill-plan-ground");
   const road = readFill("fill-plan-corridor");
@@ -113,10 +139,7 @@ function readPalette() {
     ground,
     road,
     structure,
-    text,
     path: mixColors(ground, road, 0.55),
-    glass: mixColors(structure, text, 0.42),
-    roof: mixColors(structure, text, 0.1),
     tree: mixColors(structure, text, 0.16),
   };
 }
@@ -130,6 +153,9 @@ interface Placement {
   w: number;
   h: number;
   d: number;
+  /** 없으면 메시 재질의 색을 쓴다. */
+  color?: string;
+  blockId?: string;
 }
 
 const ignoreRaycast = () => null;
@@ -137,30 +163,39 @@ const ignoreRaycast = () => null;
 function Instances({
   geometry,
   items,
-  color,
+  color = "#ffffff",
+  material,
+  renderOrder = 0,
   castShadow = false,
   flatShading = false,
   hittable = false,
+  opacity,
 }: {
   geometry: THREE.BufferGeometry;
   items: Placement[];
-  color: string;
+  color?: string;
+  material?: THREE.Material;
+  renderOrder?: number;
   castShadow?: boolean;
   flatShading?: boolean;
   hittable?: boolean;
+  opacity?: number;
 }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => {
     const target = mesh.current;
     if (!target) return;
     const transform = new THREE.Object3D();
+    const tint = new THREE.Color();
     items.forEach((item, index) => {
       transform.position.set(item.x, item.y, item.z);
       transform.scale.set(item.w, item.h, item.d);
       transform.updateMatrix();
       target.setMatrixAt(index, transform.matrix);
+      if (item.color) target.setColorAt(index, tint.set(item.color));
     });
     target.instanceMatrix.needsUpdate = true;
+    if (target.instanceColor) target.instanceColor.needsUpdate = true;
     invalidate();
   }, [items]);
 
@@ -169,92 +204,151 @@ function Instances({
     <instancedMesh
       key={items.length}
       ref={mesh}
-      args={[geometry, undefined, items.length]}
+      args={[geometry, material, items.length]}
+      renderOrder={renderOrder}
       castShadow={castShadow}
-      receiveShadow
+      receiveShadow={!material}
       frustumCulled={false}
+      userData={{ blockIds: items.map((item) => item.blockId) }}
       {...(hittable ? {} : { raycast: ignoreRaycast })}
     >
-      <meshLambertMaterial color={color} flatShading={flatShading} />
+      {!material && (
+        <meshLambertMaterial
+          color={color}
+          flatShading={flatShading}
+          transparent={opacity !== undefined}
+          opacity={opacity ?? 1}
+          depthWrite={opacity === undefined}
+        />
+      )}
     </instancedMesh>
   );
 }
 
-/** 건물 조각을 재질과 모양별로 모은다. 건물이 많아도 그리기 호출이 늘지 않는다. */
+/** 건물 조각을 모양별로 모은다. 색은 조각마다 넣어 건물이 많아도 그리기 호출이 늘지 않는다. */
 function collectInstances(blocks: CampusBlock[]) {
-  const wallBoxes: Placement[] = [];
-  const glassBoxes: Placement[] = [];
-  const wallRounds: Placement[] = [];
-  const glassRounds: Placement[] = [];
+  const boxes: Placement[] = [];
+  const rounds: Placement[] = [];
   const wedges: Placement[] = [];
   const hourglasses: Placement[] = [];
+  const nets: Placement[] = [];
   const ribbons: Placement[] = [];
   const roofs: Placement[] = [];
 
-  for (const part of blocks.flatMap((block) => block.parts)) {
-    const [x, z] = toWorld(part.x, part.z);
-    const base = part.y ?? 0;
-    const placement = { x, y: base + part.h / 2, z, w: part.w, h: part.h, d: part.d };
-    const isGlass = part.tone === "glass";
+  for (const block of blocks) {
+    const { colors } = block;
+    for (const part of block.parts) {
+      const [x, z] = toWorld(part.x, part.z);
+      const base = part.y ?? 0;
+      const tone = part.tone ?? "wall";
+      const color =
+        tone === "glass"
+          ? colors.glass
+          : tone === "accent"
+            ? colors.accent
+            : tone === "frame"
+              ? (colors.frame ?? colors.wall)
+              : colors.wall;
+      const placement = { x, y: base + part.h / 2, z, w: part.w, h: part.h, d: part.d, color, blockId: block.id };
 
-    if (part.shape === "wedge") wedges.push(placement);
-    else if (part.shape === "hourglass") hourglasses.push(placement);
-    else if (part.shape === "round") (isGlass ? glassRounds : wallRounds).push(placement);
-    else {
-      (isGlass ? glassBoxes : wallBoxes).push(placement);
-      const floorHeight = part.floors ? part.h / part.floors : 0;
-      for (let floor = 0; floor < (part.floors ?? 0); floor += 1) {
-        ribbons.push({
-          x,
-          y: base + floorHeight * (floor + RIBBON.offset),
-          z,
-          w: part.w + RIBBON.proud,
-          h: floorHeight * RIBBON.ratio,
-          d: part.d + RIBBON.proud,
-        });
-      }
-      // 난간이 남도록 지붕을 안쪽으로 한 겹 덮는다.
-      if (!isGlass && Math.min(part.w, part.d) >= 2 && (part.h >= 1 || part.decal)) {
-        roofs.push({ x, y: base + part.h + 0.012, z, w: part.w - ROOF_INSET, h: 0.024, d: part.d - ROOF_INSET });
+      if (tone === "net") nets.push(placement);
+      else if (part.shape === "wedge") wedges.push(placement);
+      else if (part.shape === "hourglass") hourglasses.push(placement);
+      else if (part.shape === "round") rounds.push(placement);
+      else {
+        boxes.push(placement);
+        const floorHeight = part.floors ? part.h / part.floors : 0;
+        for (let floor = 0; floor < (part.floors ?? 0); floor += 1) {
+          ribbons.push({
+            x,
+            y: base + floorHeight * (floor + RIBBON.offset),
+            z,
+            w: part.w + RIBBON.proud,
+            h: floorHeight * (part.glazing ?? RIBBON.ratio),
+            d: part.d + RIBBON.proud,
+            color: colors.glass,
+          });
+        }
+        // 난간이 남도록 지붕을 안쪽으로 한 겹 덮는다.
+        if (tone !== "glass" && Math.min(part.w, part.d) >= 1.5 && part.h >= 1) {
+          roofs.push({
+            x,
+            y: base + part.h + 0.012,
+            z,
+            w: part.w - ROOF_INSET,
+            h: 0.024,
+            d: part.d - ROOF_INSET,
+            color: colors.roof,
+          });
+        }
       }
     }
   }
-  return { wallBoxes, glassBoxes, wallRounds, glassRounds, wedges, hourglasses, ribbons, roofs };
+  return { boxes, rounds, wedges, hourglasses, nets, ribbons, roofs };
 }
 
-function BlockMeshes({
-  blocks,
-  wall,
-  glass,
-  roof,
-  hittable = false,
-}: {
-  blocks: CampusBlock[];
-  wall: string;
-  glass: string;
-  roof: string;
-  hittable?: boolean;
-}) {
+function BlockMeshes({ blocks }: { blocks: CampusBlock[] }) {
   const items = useMemo(() => collectInstances(blocks), [blocks]);
   return (
     <>
-      <Instances geometry={UNIT_BOX} items={items.wallBoxes} color={wall} castShadow hittable={hittable} />
-      <Instances geometry={UNIT_BOX} items={items.glassBoxes} color={glass} castShadow hittable={hittable} />
-      <Instances geometry={UNIT_CYLINDER} items={items.wallRounds} color={wall} castShadow hittable={hittable} />
-      <Instances geometry={UNIT_CYLINDER} items={items.glassRounds} color={glass} castShadow hittable={hittable} />
-      <Instances geometry={UNIT_WEDGE} items={items.wedges} color={wall} castShadow hittable={hittable} />
-      <Instances
-        geometry={UNIT_HOURGLASS}
-        items={items.hourglasses}
-        color={glass}
-        castShadow
-        flatShading
-        hittable={hittable}
-      />
-      <Instances geometry={UNIT_BOX} items={items.ribbons} color={glass} />
-      <Instances geometry={UNIT_BOX} items={items.roofs} color={roof} />
+      <Instances geometry={UNIT_BOX} items={items.boxes} castShadow hittable />
+      <Instances geometry={UNIT_CYLINDER} items={items.rounds} castShadow hittable />
+      <Instances geometry={UNIT_WEDGE} items={items.wedges} castShadow hittable />
+      <Instances geometry={UNIT_HOURGLASS} items={items.hourglasses} castShadow flatShading hittable />
+      <Instances geometry={UNIT_BOX} items={items.nets} color="#7fb5ad" opacity={0.28} hittable />
+      <Instances geometry={UNIT_BOX} items={items.ribbons} />
+      <Instances geometry={UNIT_BOX} items={items.roofs} />
     </>
   );
+}
+
+function growPlacements(items: Placement[], margin: number): Placement[] {
+  return items.map((item) => ({
+    ...item,
+    w: item.w + margin * 2,
+    h: item.h + margin * 2,
+    d: item.d + margin * 2,
+  }));
+}
+
+/** 화면 높이에 보이는 월드 길이. 윤곽선 두께를 화면 픽셀로 맞출 때 쓴다. */
+const VISIBLE_WORLD_HEIGHT = 2 * CAMERA_DISTANCE * Math.tan(THREE.MathUtils.degToRad(CAMERA_FOV / 2));
+
+function SelectionOutline({ block }: { block: CampusBlock }) {
+  const canvasHeight = useThree((state) => state.size.height);
+  const margin = (OUTLINE_PX * VISIBLE_WORLD_HEIGHT) / canvasHeight;
+  const { mask, hull } = useMemo(() => {
+    const items = collectInstances([block]);
+    const solids = [...items.boxes, ...items.nets];
+    return {
+      mask: {
+        boxes: [...solids, ...items.ribbons, ...items.roofs],
+        rounds: items.rounds,
+        wedges: items.wedges,
+        hourglasses: items.hourglasses,
+      },
+      hull: {
+        boxes: growPlacements(solids, margin),
+        rounds: growPlacements(items.rounds, margin),
+        wedges: growPlacements(items.wedges, margin),
+        hourglasses: growPlacements(items.hourglasses, margin),
+      },
+    };
+  }, [block, margin]);
+
+  const shapes = [
+    [UNIT_BOX, mask.boxes, hull.boxes],
+    [UNIT_CYLINDER, mask.rounds, hull.rounds],
+    [UNIT_WEDGE, mask.wedges, hull.wedges],
+    [UNIT_HOURGLASS, mask.hourglasses, hull.hourglasses],
+  ] as const;
+
+  return shapes.map(([geometry, maskItems, hullItems]) => (
+    <group key={geometry.uuid}>
+      <Instances geometry={geometry} items={maskItems} material={OUTLINE_MASK_MATERIAL} renderOrder={1} />
+      <Instances geometry={geometry} items={hullItems} material={OUTLINE_HULL_MATERIAL} renderOrder={2} />
+    </group>
+  ));
 }
 
 /** 건물 전체를 감싸는 상자 */
@@ -272,25 +366,36 @@ function footprint(block: CampusBlock) {
   };
 }
 
-function LiveBuilding({
-  block,
-  color,
-  onSelect,
+/** 이름표를 달 위치: 건물 뒤쪽 모서리 위 */
+function labelAnchor(block: CampusBlock) {
+  const box = footprint(block);
+  const [x, z] = toWorld(box.x, box.z - box.d / 2);
+  return new THREE.Vector3(x, box.h + LABEL_GAP, z);
+}
+
+function blockIdOf(event: ThreeEvent<MouseEvent | PointerEvent>): string | undefined {
+  const { blockIds, blockId } = event.object.userData as { blockIds?: (string | undefined)[]; blockId?: string };
+  return blockIds?.[event.instanceId ?? -1] ?? blockId;
+}
+
+function CampusBuildings({
+  blocks,
+  liveBlocks,
+  onPick,
   onHoverChange,
 }: {
-  block: CampusBlock;
-  color: string;
-  onSelect: () => void;
+  blocks: CampusBlock[];
+  liveBlocks: CampusBlock[];
+  onPick: (blockId: string) => void;
   onHoverChange: (hovered: boolean) => void;
 }) {
-  const blocks = useMemo(() => [block], [block]);
-  const box = footprint(block);
-  const [boxX, boxZ] = toWorld(box.x, box.z);
   return (
     <group
       onClick={(event: ThreeEvent<MouseEvent>) => {
         event.stopPropagation();
-        if (event.delta <= DRAG_THRESHOLD_PX) onSelect();
+        if (event.delta > DRAG_THRESHOLD_PX) return;
+        const blockId = blockIdOf(event);
+        if (blockId) onPick(blockId);
       }}
       onPointerOver={(event: ThreeEvent<PointerEvent>) => {
         event.stopPropagation();
@@ -298,77 +403,22 @@ function LiveBuilding({
       }}
       onPointerOut={() => onHoverChange(false)}
     >
-      {/* 중정처럼 뚫린 곳을 눌러도 건물을 누른 것으로 친다. */}
-      <mesh geometry={UNIT_BOX} position={[boxX, box.h / 2, boxZ]} scale={[box.w, box.h, box.d]} visible={false} />
-      <BlockMeshes blocks={blocks} wall={color} glass={darken(color, 0.34)} roof={darken(color, 0.84)} />
-    </group>
-  );
-}
-
-const DECAL_ASPECT = 2.6;
-const DECAL_MAX_WIDTH = 8;
-// 폰 너비에서는 글자를 읽을 수 없어 숨긴다. 범례가 회색의 뜻을 알려 준다.
-const DECAL_MIN_CANVAS_PX = 480;
-
-function RoofDecals({ blocks, color }: { blocks: CampusBlock[]; color: string }) {
-  const isWide = useThree((state) => state.size.width >= DECAL_MIN_CANVAS_PX);
-  const material = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 416;
-    canvas.height = 160;
-    const context = canvas.getContext("2d");
-    if (context) {
-      const font = getComputedStyle(document.documentElement).getPropertyValue("--app-font");
-      context.font = `700 92px ${font}`;
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.fillStyle = color;
-      context.fillText("준비 중", canvas.width / 2, canvas.height / 2);
-    }
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 8;
-    return new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
-  }, [color]);
-
-  useEffect(
-    () => () => {
-      material.map?.dispose();
-      material.dispose();
-    },
-    [material],
-  );
-
-  if (!isWide) return null;
-  return blocks
-    .flatMap((block) => block.parts)
-    .filter((part) => part.decal)
-    .map((part) => {
-      const [x, z] = toWorld(part.x, part.z);
-      const width = Math.min((part.w - ROOF_INSET) * 0.86, (part.d - ROOF_INSET) * 0.8 * DECAL_ASPECT, DECAL_MAX_WIDTH);
-      return (
-        <mesh
-          key={`${part.x}-${part.z}`}
-          geometry={UNIT_PLANE}
-          material={material}
-          position={[x, (part.y ?? 0) + part.h + 0.05, z]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          scale={[width, width / DECAL_ASPECT, 1]}
-          raycast={ignoreRaycast}
-        />
-      );
-    });
-}
-
-function PreparingBuildings({ blocks, palette }: { blocks: CampusBlock[]; palette: Palette }) {
-  return (
-    // 핸들러가 있어야 앞 건물이 포인터를 막아, 가려진 정보대가 눌리지 않는다.
-    <group
-      onClick={(event: ThreeEvent<MouseEvent>) => event.stopPropagation()}
-      onPointerOver={(event: ThreeEvent<PointerEvent>) => event.stopPropagation()}
-    >
-      <BlockMeshes blocks={blocks} wall={palette.structure} glass={palette.glass} roof={palette.roof} hittable />
-      <RoofDecals blocks={blocks} color={palette.text} />
+      <BlockMeshes blocks={blocks} />
+      {liveBlocks.map((block) => {
+        const box = footprint(block);
+        const [x, z] = toWorld(box.x, box.z);
+        // 중정처럼 뚫린 곳을 눌러도 건물을 누른 것으로 친다.
+        return (
+          <mesh
+            key={block.id}
+            geometry={UNIT_BOX}
+            position={[x, box.h / 2, z]}
+            scale={[box.w, box.h, box.d]}
+            visible={false}
+            userData={{ blockId: block.id }}
+          />
+        );
+      })}
     </group>
   );
 }
@@ -382,6 +432,7 @@ function flatRects(rects: CampusRect[], y: number, h: number): Placement[] {
 
 const ROAD_ITEMS = flatRects(CAMPUS_ROADS, 0.03, 0.06);
 const PATH_ITEMS = flatRects(CAMPUS_PATHS, 0.015, 0.03);
+const COURT_ITEMS = flatRects(CAMPUS_COURTS, 0.015, 0.03);
 const HEDGE_ITEMS: Placement[] = CAMPUS_HEDGES.map((hedge) => {
   const [x, z] = toWorld(hedge.x, hedge.z);
   return { x, y: hedge.h / 2, z, w: hedge.w, h: hedge.h, d: hedge.d };
@@ -406,6 +457,7 @@ function Ground({ palette }: { palette: Palette }) {
       </mesh>
       <Instances geometry={UNIT_BOX} items={ROAD_ITEMS} color={palette.road} />
       <Instances geometry={UNIT_BOX} items={PATH_ITEMS} color={palette.path} />
+      <Instances geometry={UNIT_BOX} items={COURT_ITEMS} color={palette.path} />
       <Instances geometry={UNIT_BOX} items={HEDGE_ITEMS} color={palette.tree} castShadow />
       <FlatDisc x={ringX} z={ringZ} w={outer} d={outer} y={0.04} color={palette.road} />
       <FlatDisc x={ringX} z={ringZ} w={inner} d={inner} y={0.08} color={palette.ground} />
@@ -487,9 +539,11 @@ function CameraRig({
       const label = labelsRef.current.get(anchor.id);
       if (!label) continue;
       projected.copy(anchor.position).project(camera);
-      const x = ((projected.x + 1) / 2) * size.width;
-      const y = ((1 - projected.y) / 2) * size.height;
-      label.style.transform = `translate(${x}px, ${y - LABEL_CARET_PX}px) translate(-50%, -100%)`;
+      // 화면 가장자리 건물이어도 이름표가 지도 밖으로 잘리지 않게 한다.
+      const halfWidth = label.offsetWidth / 2;
+      const x = clamp(((projected.x + 1) / 2) * size.width, halfWidth + LABEL_EDGE_PX, size.width - halfWidth - LABEL_EDGE_PX);
+      const y = Math.max(((1 - projected.y) / 2) * size.height - LABEL_CARET_PX, label.offsetHeight + LABEL_EDGE_PX);
+      label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
       label.style.visibility = "visible";
     }
   });
@@ -498,6 +552,38 @@ function CameraRig({
 
 function usePrefersReducedMotion() {
   return useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
+}
+
+function SelectionDetails({ building, at }: { building: BuildingSummary | undefined; at: string }) {
+  if (!building) return <p className="text-muted-foreground">준비 중이에요</p>;
+  const level = buildingLevel(building, at);
+  const meta = BUILDING_LEVEL_META[level];
+  const emptyPercent = building.totalCount > 0 ? Math.round((building.emptyCount / building.totalCount) * 100) : 0;
+  return (
+    <>
+      {level === "closed" ? (
+        <p className="text-muted-foreground">운영 시간이 아니에요</p>
+      ) : (
+        <p className="flex items-center gap-1.5 whitespace-nowrap">
+          <svg aria-hidden="true" viewBox="0 0 10 10" className="size-3 shrink-0">
+            <rect width="10" height="10" rx="2" className={meta.fillClass} />
+          </svg>
+          빈 비율 <strong className="tabular-nums">{emptyPercent}%</strong>
+          <span className="text-muted-foreground tabular-nums">
+            {building.emptyCount}/{building.totalCount}
+          </span>
+        </p>
+      )}
+      <Link
+        href={`/buildings/${building.id}`}
+        prefetch={false}
+        className="mt-1 flex min-h-8 items-center justify-between gap-2 rounded-md font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        강의실 보기
+        <ChevronRight aria-hidden="true" className="size-4" />
+      </Link>
+    </>
+  );
 }
 
 export function CampusMapScene({
@@ -521,6 +607,7 @@ export function CampusMapScene({
     targetElevation: ROTATION.elevation.start,
   });
   const [palette] = useState(readPalette);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const live = useMemo(
     () =>
@@ -532,25 +619,37 @@ export function CampusMapScene({
       }),
     [buildings, at],
   );
-  // 시간표를 다시 받아도 건물 구성이 같으면 회색 건물을 다시 배치하지 않는다.
+  // 시간표를 다시 받아도 건물 구성이 같으면 클릭 영역을 다시 만들지 않는다.
   const buildingIds = buildings.map((building) => building.id).join("|");
-  const preparing = useMemo(() => {
+  const liveBlocks = useMemo(() => {
     const ids = new Set(buildingIds.split("|"));
-    return CAMPUS_BLOCKS.filter((block) => !ids.has(block.id));
+    return CAMPUS_BLOCKS.filter((block) => ids.has(block.id));
   }, [buildingIds]);
-  const anchors = useMemo<LabelAnchor[]>(
-    () =>
-      live.map(({ block }) => {
-        // 건물 뒤쪽 모서리에 달아 이름표가 건물을 가리지 않게 한다.
-        const box = footprint(block);
-        const [x, z] = toWorld(box.x, box.z - box.d / 2);
-        return { id: block.id, position: new THREE.Vector3(x, box.h + LABEL_GAP, z) };
-      }),
-    [live],
-  );
+
+  const selectedBlock = selectedId ? CAMPUS_BLOCKS.find((block) => block.id === selectedId) : undefined;
+  const selectedBuilding = selectedId ? buildings.find((building) => building.id === selectedId) : undefined;
+
+  const anchors = useMemo<LabelAnchor[]>(() => {
+    const pills = liveBlocks.map((block) => ({ id: block.id, position: labelAnchor(block) }));
+    return selectedBlock ? [...pills, { id: SELECTION_LABEL_ID, position: labelAnchor(selectedBlock) }] : pills;
+  }, [liveBlocks, selectedBlock]);
+
+  // 고른 건물의 윤곽선과 카드 위치를 그리려면 프레임이 한 번 더 필요하다.
+  useEffect(() => {
+    invalidate();
+  }, [selectedId]);
 
   const setCursor = (cursor: string) => {
     if (wrapper.current) wrapper.current.style.cursor = cursor;
+  };
+
+  /** 처음 누르면 고른다. 빈 비율이 있는 건물을 한 번 더 누르면 강의실 화면으로 간다. */
+  const handlePick = (blockId: string) => {
+    if (blockId === selectedId && buildings.some((building) => building.id === blockId)) {
+      router.push(`/buildings/${blockId}`);
+      return;
+    }
+    setSelectedId(blockId);
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -592,8 +691,6 @@ export function CampusMapScene({
   return (
     <div
       ref={wrapper}
-      role="img"
-      aria-label="캠퍼스 3D 지도. 색이 칠해진 건물이 정보대이고, 회색 건물은 준비 중이에요. 드래그하면 돌려 볼 수 있어요."
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endDrag}
@@ -601,68 +698,91 @@ export function CampusMapScene({
       // 세로로 미는 터치는 페이지 스크롤로 남긴다. 가로로 민 드래그만 회전에 쓴다.
       className="relative aspect-[10/9] w-full cursor-grab touch-pan-y overflow-hidden rounded-xl select-none"
     >
-      <Canvas
-        flat
-        shadows="percentage"
-        frameloop="demand"
-        dpr={[1, 2]}
-        camera={{ fov: 22, near: 40, far: 700 }}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener("webglcontextlost", onContextLost, { once: true });
-        }}
+      <div
+        role="img"
+        aria-label="캠퍼스 3D 지도. 건물을 누르면 검은 윤곽선과 빈 비율이 나와요. 시간표가 있는 건물은 정보대뿐이에요. 드래그하면 돌려 볼 수 있어요."
+        className="absolute inset-0"
       >
-        <ambientLight intensity={LIGHT.ambient} />
-        <directionalLight
-          position={[...LIGHT.position]}
-          intensity={LIGHT.sun}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-85}
-          shadow-camera-right={85}
-          shadow-camera-top={85}
-          shadow-camera-bottom={-85}
-          shadow-camera-near={20}
-          shadow-camera-far={320}
-          shadow-bias={-0.0006}
-        />
-        <CameraRig orbitRef={orbit} anchors={anchors} labelsRef={labels} reducedMotion={reducedMotion} />
-        <Ground palette={palette} />
-        <Trees color={palette.tree} />
-        <PreparingBuildings blocks={preparing} palette={palette} />
-        {live.map(({ block, building, fill }) => (
-          <LiveBuilding
-            key={block.id}
-            block={block}
-            color={fill}
-            onSelect={() => router.push(`/buildings/${building.id}`)}
+        <Canvas
+          flat
+          shadows="percentage"
+          frameloop="demand"
+          dpr={[1, 2]}
+          gl={{ stencil: true }}
+          camera={{ fov: CAMERA_FOV, near: 40, far: 700 }}
+          onPointerMissed={() => setSelectedId(null)}
+          onCreated={({ gl }) => {
+            gl.domElement.addEventListener("webglcontextlost", onContextLost, { once: true });
+          }}
+        >
+          <ambientLight intensity={LIGHT.ambient} />
+          <directionalLight
+            position={[...LIGHT.position]}
+            intensity={LIGHT.sun}
+            castShadow
+            shadow-mapSize={[2048, 2048]}
+            shadow-camera-left={-85}
+            shadow-camera-right={85}
+            shadow-camera-top={85}
+            shadow-camera-bottom={-85}
+            shadow-camera-near={20}
+            shadow-camera-far={320}
+            shadow-bias={-0.0006}
+          />
+          <CameraRig orbitRef={orbit} anchors={anchors} labelsRef={labels} reducedMotion={reducedMotion} />
+          <Ground palette={palette} />
+          <Trees color={palette.tree} />
+          <CampusBuildings
+            blocks={CAMPUS_BLOCKS}
+            liveBlocks={liveBlocks}
+            onPick={handlePick}
             onHoverChange={(hovered) => setCursor(hovered ? "pointer" : "")}
           />
-        ))}
-      </Canvas>
+          {selectedBlock && <SelectionOutline key={selectedBlock.id} block={selectedBlock} />}
+        </Canvas>
+      </div>
 
-      {live.map(({ building, fill, text }) => (
-        <Link
-          key={building.id}
+      {live
+        .filter(({ building }) => building.id !== selectedId)
+        .map(({ building, fill, text }) => (
+          <button
+            key={building.id}
+            ref={(element) => {
+              if (element) labels.current.set(building.id, element);
+              else labels.current.delete(building.id);
+            }}
+            type="button"
+            // 키보드 이동은 지도 아래 링크가 맡는다. 이 이름표는 누르기 쉽게 하려는 복제본이다.
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={() => handlePick(building.id)}
+            style={{ backgroundColor: fill, color: text }}
+            className="invisible absolute top-0 left-0 flex items-baseline gap-1.5 rounded-md px-2 py-1 text-sm font-bold whitespace-nowrap shadow-md"
+          >
+            {building.name}
+            <span className="font-medium tabular-nums">
+              {building.emptyCount}/{building.totalCount}
+            </span>
+            <span style={{ backgroundColor: fill }} className="absolute top-full left-1/2 -mt-1 -ml-1 size-2 rotate-45" />
+          </button>
+        ))}
+
+      {selectedBlock && (
+        <div
+          key={selectedBlock.id}
           ref={(element) => {
-            if (element) labels.current.set(building.id, element);
-            else labels.current.delete(building.id);
+            if (element) labels.current.set(SELECTION_LABEL_ID, element);
+            else labels.current.delete(SELECTION_LABEL_ID);
           }}
-          href={`/buildings/${building.id}`}
-          prefetch={false}
-          draggable={false}
-          // 키보드 이동은 지도 아래 링크가 맡는다. 이 이름표는 누르기 쉽게 하려는 복제본이다.
-          tabIndex={-1}
-          aria-hidden="true"
-          style={{ backgroundColor: fill, color: text }}
-          className="invisible absolute top-0 left-0 flex items-baseline gap-1.5 rounded-md px-2 py-1 text-sm font-bold whitespace-nowrap shadow-md"
+          role="status"
+          // 카드 위에서 시작한 동작은 지도 회전으로 치지 않는다.
+          onPointerDown={(event) => event.stopPropagation()}
+          className="invisible absolute top-0 left-0 z-10 flex w-max max-w-[calc(100%-1rem)] cursor-default flex-col gap-0.5 rounded-lg border border-foreground bg-background px-2.5 py-1.5 text-xs shadow-lg sm:px-3 sm:py-2 sm:text-sm"
         >
-          {building.name}
-          <span className="font-medium tabular-nums">
-            {building.emptyCount}/{building.totalCount}
-          </span>
-          <span style={{ backgroundColor: fill }} className="absolute top-full left-1/2 -mt-1 -ml-1 size-2 rotate-45" />
-        </Link>
-      ))}
+          <p className="font-bold">{selectedBuilding?.name ?? selectedBlock.name}</p>
+          <SelectionDetails building={selectedBuilding} at={at} />
+        </div>
+      )}
     </div>
   );
 }
