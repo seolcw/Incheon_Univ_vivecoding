@@ -1,0 +1,1065 @@
+{
+ "buildings": [
+  {
+   "id": "eng",
+   "name": "정보대",
+   "lat": 37.5508,
+   "lng": 127.0743,
+   "floors": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "map": {
+    "x": 8,
+    "y": 14,
+    "w": 30,
+    "h": 22
+   }
+  }
+ ],
+ "rooms": [
+  {
+   "id": "eng-101",
+   "buildingId": "eng",
+   "floor": 1,
+   "name": "101호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "16:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "10:00",
+     "endTime": "12:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-102",
+   "buildingId": "eng",
+   "floor": 1,
+   "name": "102호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 3,
+     "startTime": "15:00",
+     "endTime": "16:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "12:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-104",
+   "buildingId": "eng",
+   "floor": 1,
+   "name": "104호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-105",
+   "buildingId": "eng",
+   "floor": 1,
+   "name": "105호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "10:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "10:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "15:00",
+     "endTime": "16:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-107",
+   "buildingId": "eng",
+   "floor": 1,
+   "name": "107호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "10:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "15:00",
+     "endTime": "16:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-111",
+   "buildingId": "eng",
+   "floor": 1,
+   "name": "111호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:00",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "14:00",
+     "endTime": "17:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-205",
+   "buildingId": "eng",
+   "floor": 2,
+   "name": "205호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:00",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "10:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "14:00",
+     "endTime": "16:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-211",
+   "buildingId": "eng",
+   "floor": 2,
+   "name": "211호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "15:00",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "16:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:30",
+     "endTime": "16:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-302",
+   "buildingId": "eng",
+   "floor": 3,
+   "name": "302호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "16:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "16:30",
+     "endTime": "17:45",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-304",
+   "buildingId": "eng",
+   "floor": 3,
+   "name": "304호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "10:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "12:00",
+     "endTime": "14:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "16:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "10:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "16:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "12:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-311",
+   "buildingId": "eng",
+   "floor": 3,
+   "name": "311호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "11:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "17:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "11:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "10:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-313",
+   "buildingId": "eng",
+   "floor": 3,
+   "name": "313호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "12:00",
+     "endTime": "16:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "15:00",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "10:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "10:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-316",
+   "buildingId": "eng",
+   "floor": 3,
+   "name": "316호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-317",
+   "buildingId": "eng",
+   "floor": 3,
+   "name": "317호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 3,
+     "startTime": "14:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-406",
+   "buildingId": "eng",
+   "floor": 4,
+   "name": "406호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "12:00",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-407",
+   "buildingId": "eng",
+   "floor": 4,
+   "name": "407호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "16:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-408",
+   "buildingId": "eng",
+   "floor": 4,
+   "name": "408호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:00",
+     "endTime": "14:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "12:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "14:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "16:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "12:00",
+     "endTime": "17:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "13:00",
+     "endTime": "14:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-415",
+   "buildingId": "eng",
+   "floor": 4,
+   "name": "415호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:00",
+     "endTime": "15:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-416",
+   "buildingId": "eng",
+   "floor": 4,
+   "name": "416호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "12:00",
+     "endTime": "14:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-417",
+   "buildingId": "eng",
+   "floor": 4,
+   "name": "417호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "12:00",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-501",
+   "buildingId": "eng",
+   "floor": 5,
+   "name": "501호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 2,
+     "startTime": "12:00",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-502",
+   "buildingId": "eng",
+   "floor": 5,
+   "name": "502호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:30",
+     "endTime": "14:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-503",
+   "buildingId": "eng",
+   "floor": 5,
+   "name": "503호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 2,
+     "startTime": "10:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "13:00",
+     "endTime": "14:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "13:00",
+     "endTime": "16:50",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-504",
+   "buildingId": "eng",
+   "floor": 5,
+   "name": "504호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "10:30",
+     "endTime": "13:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "16:30",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "15:00",
+     "endTime": "17:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "13:30",
+     "endTime": "16:15",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-505",
+   "buildingId": "eng",
+   "floor": 5,
+   "name": "505호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "14:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "13:00",
+     "endTime": "15:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 3,
+     "startTime": "15:00",
+     "endTime": "16:15",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 4,
+     "startTime": "09:00",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "10:30",
+     "endTime": "11:45",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 5,
+     "startTime": "15:00",
+     "endTime": "17:45",
+     "title": "수업"
+    }
+   ]
+  },
+  {
+   "id": "eng-511",
+   "buildingId": "eng",
+   "floor": 5,
+   "name": "511호",
+   "capacity": 0,
+   "tags": [],
+   "schedule": [
+    {
+     "dayOfWeek": 1,
+     "startTime": "09:00",
+     "endTime": "11:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 1,
+     "startTime": "13:00",
+     "endTime": "15:50",
+     "title": "수업"
+    },
+    {
+     "dayOfWeek": 2,
+     "startTime": "15:00",
+     "endTime": "17:50",
+     "title": "수업"
+    }
+   ]
+  }
+ ]
+}
