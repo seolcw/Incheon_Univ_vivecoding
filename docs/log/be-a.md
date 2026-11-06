@@ -99,6 +99,10 @@
 - 확인 방법: test_chat 8개 통과(추가3개: AI 잘못된 되묻기, 실제 라우트의 후속 조건/사용자 분리, TTL/용량). 전체41개 중40개 통과, 기존 test_core.test_main_app_routes_errors_and_post_cors는 backend.core fixture와 main의 core import가 달라404이며 아직 무본문 /api/chat을200 스텁으로 기대함. 해당 테스트·검사를 약화하거나 삭제하지 않음. 최초 backend/ 실행 시 패키지 import 오류는 PYTHONPATH에 루트와 backend를 지정해 해결.
 - 남은 문제: 실제 OpenAI 공개 배포 검증 진행 중. 전체 대화 의미를 기억하는 기능은 아니며 직전 이용 시간·층 조건만 이어받는다.
 
+## 13:46 동일 사용자 문장으로 공개 AI 재검증 완료
+- 8975973 push 및 Render bingang-api Deploy succeeded/Live 확인. 공개 웹에서 ‘7호관 2시간 이상 사용할곳’ → 실제 AI 추천, 전체 층120분 이상101/102/105호 표시. 이어 ‘층 상관 없어’ → 같은120분·전체 층 조건과 추천 카드 유지. 불필요한 층 질문 반복이 사라짐을 확인.
+- 프론트 변경·재배포 없이 기존 /api/chat을 사용. 검증 화면은 저장소 밖 torch-followup-fixed.jpg. 키·원문 운영 로그 추가 없음. 기존 통합 테스트1개의 fixture/import·스텁 기대값 문제는 위 기록대로 남아 있으며 챗봇 관련8개는 통과.
+
 ## 13:27 main 통합 배포 및 공개 모임 초기화
 - 바뀐 것: 사용자 요청으로 origin/main 64eac9b를 be-a에 fast-forward 병합하고 push. Render 배포 브랜치는 be-a 유지. bingang-web 64eac9b, bingang-api 47b05ab(64eac9b 포함) Deploy succeeded 확인. 진행 중 작은 채팅창 수정은 stash에 보존했으며 별도 작업에서 47b05ab로 커밋됨. 이번 공개 웹 검증은 main의 기존 횃불ON UI 기준.
 - API 영향: 계약 변경 없음. 저장소 밖 인증 JSON을 출력 없이 로드하고 STORAGE=firestore, CAMPUS_SOURCE=seed에서 python -m scripts.seed_demo --reset-contest-meetups 실행. meetups는 demo-m1 하나, eng-316, 1명으로 초기화. 다른 컬렉션 변경 없음.
