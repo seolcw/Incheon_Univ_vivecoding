@@ -156,3 +156,9 @@
 - API 영향: 없음. 문서만 변경, frontend·핵심 로직·SPEC·API 계약·시드·운영 데이터 미변경. 새 패키지 없음.
 - 확인 방법: 2026-11-07 기존 unittest48개 중47개 통과, 공개 읽기 health200·storage=firestore·campus source=seed와 11월10일14:10 기준13/26·meetupCount0 확인. 프론트·백엔드 코드 대조, 로컬 문서 링크/앵커44개·코드 블록·git diff --check 통과. 제출 PDF·엑셀·영상은 Git 추적 대상이 아님을 확인.
 - 남은 문제: 기존 test_core.test_main_app_routes_errors_and_post_cors의 fixture/import 경로 불일치로404가 나는 실패1개와 이전 chat 스텁 기대값은 그대로 기록. 실제 외부 API 키와 제출 폴더 원본은 업로드하지 않음.
+
+## 17:18 2026-11-07 README 시각자료 및 수상 내역
+- 바뀐 것: 사용자 요청으로 사용 흐름·시스템 구성·AI 추천 흐름을 PNG3장으로 제작해 README에 직접 삽입. 가로2560px 이미지, 큰 이미지 링크와 대체 텍스트 제공. 기존 Mermaid 소스와 Windows 재생성 스크립트는 docs/diagrams/에 보관. 사용자가 알려 준 대상·정보기술대학장상 수상 사실을 README 상단에 한 줄로 표기.
+- API 영향: 없음. 문서·이미지만 변경했으며 서비스 코드·frontend·계약·배포·DB는 변경하지 않음. 추가 패키지 없음.
+- 확인 방법: PNG3장의 한글·배치·화살표 직접 확인, 기존 구현과 데이터 흐름 대조, README 링크·이미지 파일·PNG 규격 및 git diff --check 검증. 서비스 코드 변경이 없어 기존 테스트를 반복 실행하지 않음.
+- 남은 문제: 수상 표기는 사용자 제공 대회명·상명을 사용. 기존 테스트 실패1개 등 구현 제한은 이전 README 기록 그대로 유지.
