@@ -62,16 +62,26 @@ Firestore 날짜는 Timestamp, API는 ISO 8601 +09:00. 참여/나가기/취소�
 `backend/`에서:
 
 ```powershell
+$env:STORAGE = 'memory'
+$env:CAMPUS_SOURCE = 'seed'
+$env:OPENAI_API_KEY = ''
 $env:PYTHONUTF8 = '1'
 $env:PYTHONPATH = (Resolve-Path ..).Path
 .venv\Scripts\python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+2026-11-07 전체 재검사 결과는 **48개 중 47개 통과, 1개 실패**다. 실패는 `test_core.CoreTests.test_main_app_routes_errors_and_post_cors`의 `backend.core`/`core` fixture·import 경로 불일치로 인한 `404 != 200`이며, 해당 검사에는 이전 챗봇 스텁 기대값도 남아 있다. 메모리 저장소·모의 Firestore·모의 AI 기반 검사이고 실제 DB 접속이나 유료 AI 호출을 수행한 결과는 아니다.
+
+실제 Firestore 연결 검증은 별도다. 다음 스크립트는 테스트용 모임을 만들고 자신의 검증 문서만 정리한다. 사용할 프로젝트·주소를 확인하고 실행한다.
+
+```powershell
 # 위 인증 로더와 CAMPUS_SOURCE=seed 설정 후, 비어 있는 포트 사용
 .venv\Scripts\python -m scripts.verify_firestore --port 8011
 # 공개 서버 검증 (이 경우 재시작은 하지 않음)
 .venv\Scripts\python -m scripts.verify_firestore --base-url 'https://실제-백엔드-주소'
 ```
 
-초기 32개 단위/통합 검사와 프론트 production build 통과 이력이 있다. 최신 아바타·챗봇·모임 관련 검사 31개가 통과했으며 전체 검사에서는 `tests/test_core.py`의 통합 fixture/import 경로와 이전 스텁 기대값 문제 1개가 남아 있다. 실제 Firestore 검사에서 26개 방 조회, 별도 요청의 모임 조회, 생성201, 다른 userId 참여200(1→2), 중복 참여 인원 유지, 로컬 서버 재시작 후 유지 확인. 새 아바타 저장 검사는 memory API와 모의 Firestore 어댑터 기준이며 공개 API의 avatar 응답 필드도 확인했다. 검증 스크립트는 고유 hostId로 생성한 자기 검증 문서만 정리한다. 기존 모임과 demo-m1을 초기화하지 않는다.
+2026-11-06 실제 Firestore 검사에서는 26개 방 조회, 별도 요청의 모임 조회, 생성201, 다른 userId 참여200(1→2), 중복 참여 인원 유지, 로컬 서버 재시작 후 유지까지 확인했다. 아바타 저장 검사는 memory API와 모의 Firestore 어댑터 기준이며 공개 API의 avatar 응답 필드도 확인했다. 검증 스크립트는 고유 hostId로 생성한 자기 검증 문서만 정리한다. 기존 모임과 demo-m1을 초기화하지 않는다. 프론트 production build·lint의 검증 이력은 [프론트 로그](../docs/log/fe.md)를 참고한다.
 
 출처: [FastAPI 예외 처리](https://fastapi.tiangolo.com/tutorial/handling-errors/), [Render FastAPI 배포](https://render.com/docs/deploy-fastapi). 외부 구현 코드는 복사하지 않았다.
 

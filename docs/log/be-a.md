@@ -150,3 +150,9 @@
 - API 영향: 14:56 Render Events에서 Service restarted by you 확인. bingang-api 프로세스 재시작으로 서버 메모리 챗봇 문맥 초기화. 웹 서비스는 재시작하지 않음.
 - 확인 방법: 14:57 공개 GET /api/meetups?includePast=true의 meetupsCount0, 2026-11-10T14:10:00+09:00 기준 buildings 정보대 emptyCount13/totalCount26/meetupCount0, health200·storage=firestore 확인. 재시작 후 demo-m1 재생성 없음.
 - 남은 문제: 요청한 초기화 완료. 1회 예약14-50 삭제하여 재실행 방지. 이후 사용자가 만드는 새 모임은 자동 삭제하지 않음.
+
+## 16:57 2026-11-07 프로젝트 README 전체 정리
+- 바뀐 것: 루트 README를 최종 코드 기준 프로젝트 안내로 재작성. 공개 링크, 기능·화면, 사용자/시스템/AI Mermaid 흐름도3개, 두 사용자 시연, 로컬 실행·환경변수·배포, 코드·API 안내, 팀 역할·프롬프트 근거, 한계와 출처 정리. 기존 디자인 도구 안내는 docs/design-tooling.md에 보존하고 backend/README.md 검증 결과 갱신.
+- API 영향: 없음. 문서만 변경, frontend·핵심 로직·SPEC·API 계약·시드·운영 데이터 미변경. 새 패키지 없음.
+- 확인 방법: 2026-11-07 기존 unittest48개 중47개 통과, 공개 읽기 health200·storage=firestore·campus source=seed와 11월10일14:10 기준13/26·meetupCount0 확인. 프론트·백엔드 코드 대조, 로컬 문서 링크/앵커44개·코드 블록·git diff --check 통과. 제출 PDF·엑셀·영상은 Git 추적 대상이 아님을 확인.
+- 남은 문제: 기존 test_core.test_main_app_routes_errors_and_post_cors의 fixture/import 경로 불일치로404가 나는 실패1개와 이전 chat 스텁 기대값은 그대로 기록. 실제 외부 API 키와 제출 폴더 원본은 업로드하지 않음.
