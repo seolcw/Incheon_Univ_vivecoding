@@ -79,7 +79,7 @@ function BeginCanvas([int] $height, [string] $section, [string] $title, [string]
     $script:g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
     $script:g.Clear([System.Drawing.ColorTranslator]::FromHtml('#F5F8FC'))
     $script:g.ScaleTransform(2, 2)
-    Label "BINGANG  /  $section" 48 28 18 $script:blue -Bold
+    Label "빈강 · BINGANG  /  $section" 48 28 18 $script:blue -Bold
     Label $title 48 66 36 $script:ink -Bold
     Label $subtitle 48 120 22 $script:muted
 }
